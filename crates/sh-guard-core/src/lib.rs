@@ -3,6 +3,8 @@ pub use types::*;
 
 pub(crate) mod parser;
 #[doc(hidden)]
+pub mod parser_fallback;
+#[doc(hidden)]
 pub mod rules;
 #[doc(hidden)]
 pub mod context;
@@ -16,6 +18,7 @@ pub mod pipeline;
 #[doc(hidden)]
 pub mod test_internals {
     pub use crate::parser::*;
+    pub use crate::parser_fallback;
     pub use crate::rules;
     pub use crate::context;
     pub use crate::analyzer;
