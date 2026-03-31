@@ -6,12 +6,15 @@ pub(crate) mod parser;
 pub mod rules;
 #[doc(hidden)]
 pub mod context;
+#[doc(hidden)]
+pub mod analyzer;
 
 #[doc(hidden)]
 pub mod test_internals {
     pub use crate::parser::*;
     pub use crate::rules;
     pub use crate::context;
+    pub use crate::analyzer;
 }
 
 /// Classify a shell command and return a rich analysis.
