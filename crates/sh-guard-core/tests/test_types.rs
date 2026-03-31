@@ -630,35 +630,33 @@ fn analysis_result_roundtrip() {
 // ========================================================
 
 #[test]
-fn classify_stub_returns_safe_defaults() {
+fn classify_returns_safe_for_echo() {
     let result = classify("echo hello", None);
     assert_eq!(result.command, "echo hello");
-    assert_eq!(result.score, 0);
+    assert!(result.score <= 10, "echo hello scored {}", result.score);
     assert_eq!(result.level, RiskLevel::Safe);
     assert_eq!(result.quick_decision, QuickDecision::Safe);
-    assert!(result.risk_factors.is_empty());
-    assert!(result.sub_commands.is_empty());
+    assert!(!result.sub_commands.is_empty()); // Now produces sub-commands
     assert!(result.pipeline_flow.is_none());
-    assert!(result.mitre_mappings.is_empty());
     assert_eq!(result.parse_confidence, ParseConfidence::Full);
 }
 
 #[test]
-fn risk_score_stub() {
-    assert_eq!(risk_score("ls"), 0);
+fn risk_score_safe_for_ls() {
+    assert!(risk_score("ls") <= 10);
 }
 
 #[test]
-fn risk_level_stub() {
+fn risk_level_safe_for_ls() {
     assert_eq!(risk_level("ls"), RiskLevel::Safe);
 }
 
 #[test]
-fn classify_batch_stub() {
+fn classify_batch_safe_commands() {
     let results = classify_batch(&["ls", "pwd", "echo hi"], None);
     assert_eq!(results.len(), 3);
     for r in &results {
-        assert_eq!(r.score, 0);
+        assert!(r.score <= 20, "safe command scored {}", r.score);
         assert_eq!(r.level, RiskLevel::Safe);
     }
 }
@@ -674,5 +672,5 @@ fn classify_with_context() {
     };
     let result = classify("ls", Some(&ctx));
     assert_eq!(result.command, "ls");
-    assert_eq!(result.score, 0);
+    assert!(result.score <= 10);
 }
