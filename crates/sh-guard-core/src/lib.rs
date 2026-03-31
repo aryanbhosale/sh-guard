@@ -1,6 +1,13 @@
 pub mod types;
 pub use types::*;
 
+pub(crate) mod parser;
+
+#[doc(hidden)]
+pub mod test_internals {
+    pub use crate::parser::*;
+}
+
 /// Classify a shell command and return a rich analysis.
 pub fn classify(command: &str, context: Option<&ClassifyContext>) -> AnalysisResult {
     let _ = context;
