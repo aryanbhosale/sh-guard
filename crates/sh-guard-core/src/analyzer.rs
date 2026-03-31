@@ -122,13 +122,17 @@ fn analyze_segment(
 }
 
 /// Check if a command's raw text contains the flag pattern.
+/// The `flags` array represents a conjunction: ALL patterns must be present.
 fn flag_matches(raw: &str, flag_rule: &rules::FlagRule) -> bool {
-    flag_rule.flags.iter().any(|pattern| {
-        // Split pattern into parts and check all are present
+    let words: Vec<&str> = raw.split_whitespace().collect();
+    flag_rule.flags.iter().all(|pattern| {
+        // Each pattern element must match a word in the raw text
         let parts: Vec<&str> = pattern.split_whitespace().collect();
-        parts
-            .iter()
-            .all(|part| raw.split_whitespace().any(|word| word == *part || word.starts_with(part)))
+        parts.iter().all(|part| {
+            words
+                .iter()
+                .any(|word| *word == *part || word.starts_with(&format!("{}=", part)))
+        })
     })
 }
 

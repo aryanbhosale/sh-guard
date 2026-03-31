@@ -62,7 +62,7 @@ pub fn context_adjustment(path: &str, intent: &Intent, context: Option<&Classify
         return 5; // No context = conservative default
     };
 
-    let path = normalize_path(path);
+    let path = resolve_relative_path(path, ctx);
     let mut adjustment: i16 = 0;
 
     // Inside project root? Reduce risk for writes/deletes
@@ -120,6 +120,32 @@ pub fn context_adjustment(path: &str, intent: &Intent, context: Option<&Classify
     }
 
     adjustment
+}
+
+/// Resolve a relative path against the context's CWD (or project_root).
+/// Absolute paths and tilde paths are left as-is after normalization.
+fn resolve_relative_path(path: &str, ctx: &ClassifyContext) -> String {
+    let normalized = normalize_path(path);
+
+    // Already absolute or tilde-based
+    if normalized.starts_with('/') || normalized.starts_with('~') {
+        return normalized;
+    }
+
+    // Relative path -- resolve against CWD (fallback to project_root)
+    let base = ctx
+        .cwd
+        .as_deref()
+        .or(ctx.project_root.as_deref())
+        .unwrap_or("");
+
+    if base.is_empty() {
+        return normalized;
+    }
+
+    let base = normalize_path(base);
+    let relative = normalized.trim_start_matches("./");
+    normalize_path(&format!("{}/{}", base, relative))
 }
 
 /// Normalize a path: remove trailing slashes, collapse //.
