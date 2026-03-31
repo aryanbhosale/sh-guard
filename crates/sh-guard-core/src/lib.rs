@@ -10,6 +10,8 @@ pub mod context;
 pub mod analyzer;
 #[doc(hidden)]
 pub mod scorer;
+#[doc(hidden)]
+pub mod pipeline;
 
 #[doc(hidden)]
 pub mod test_internals {
@@ -18,6 +20,7 @@ pub mod test_internals {
     pub use crate::context;
     pub use crate::analyzer;
     pub use crate::scorer;
+    pub use crate::pipeline;
 }
 
 /// Classify a shell command and return a rich analysis.
