@@ -4,11 +4,14 @@ pub use types::*;
 pub(crate) mod parser;
 #[doc(hidden)]
 pub mod rules;
+#[doc(hidden)]
+pub mod context;
 
 #[doc(hidden)]
 pub mod test_internals {
     pub use crate::parser::*;
     pub use crate::rules;
+    pub use crate::context;
 }
 
 /// Classify a shell command and return a rich analysis.
