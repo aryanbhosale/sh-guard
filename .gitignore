@@ -1,3 +1,13 @@
 /target
 Cargo.lock
+*.node
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.so
+*.dylib
+*.dll
+dist/
+*.tar.gz
 .venv/
