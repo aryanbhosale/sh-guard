@@ -1,0 +1,16 @@
+[package]
+name = "sh-guard-mcp"
+version = "0.1.0"
+edition = "2021"
+description = "MCP server for sh-guard: semantic shell command safety classifier"
+license = "MIT"
+repository = "https://github.com/aryanbhosale/sh-guard"
+
+[[bin]]
+name = "sh-guard-mcp"
+path = "src/main.rs"
+
+[dependencies]
+sh-guard-core = { path = "../sh-guard-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
