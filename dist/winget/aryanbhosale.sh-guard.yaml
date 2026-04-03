@@ -1,0 +1,14 @@
+PackageIdentifier: aryanbhosale.sh-guard
+PackageVersion: 0.1.0
+PackageName: sh-guard
+Publisher: aryanbhosale
+License: MIT
+ShortDescription: Semantic shell command safety classifier for AI coding agents
+PackageUrl: https://github.com/aryanbhosale/sh-guard
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/aryanbhosale/sh-guard/releases/download/v0.1.0/sh-guard-x86_64-pc-windows-msvc.tar.gz
+    InstallerSha256: PLACEHOLDER
+    InstallerType: zip
+ManifestType: singleton
+ManifestVersion: 1.0.0

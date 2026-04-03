@@ -1,0 +1,31 @@
+name: sh-guard
+base: core22
+version: '0.1.0'
+summary: Semantic shell command safety classifier
+description: |
+  Analyzes shell commands using AST parsing, data-flow analysis, and
+  context-aware risk scoring to protect AI coding agents from executing
+  dangerous commands. Sub-100μs classification with MITRE ATT&CK mapping.
+
+grade: stable
+confinement: strict
+
+parts:
+  sh-guard:
+    plugin: rust
+    source: .
+    build-packages:
+      - gcc
+    rust-path: ["crates/sh-guard-cli"]
+
+apps:
+  sh-guard:
+    command: bin/sh-guard
+    plugs:
+      - home
+      - removable-media
+  sh-guard-mcp:
+    command: bin/sh-guard-mcp
+    plugs:
+      - home
+      - network

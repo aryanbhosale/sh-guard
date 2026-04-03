@@ -23,6 +23,8 @@ jobs:
             target: x86_64-apple-darwin
           - os: macos-latest
             target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -37,12 +39,21 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }} --bin sh-guard --bin sh-guard-mcp
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-      - name: Package
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
         run: |
           mkdir -p dist
           cp target/${{ matrix.target }}/release/sh-guard dist/
           cp target/${{ matrix.target }}/release/sh-guard-mcp dist/
           cd dist && tar czf sh-guard-${{ matrix.target }}.tar.gz sh-guard sh-guard-mcp
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/sh-guard.exe dist/
+          cp target/${{ matrix.target }}/release/sh-guard-mcp.exe dist/
+          cd dist && tar czf sh-guard-${{ matrix.target }}.tar.gz sh-guard.exe sh-guard-mcp.exe
       - uses: actions/upload-artifact@v4
         with:
           name: sh-guard-${{ matrix.target }}

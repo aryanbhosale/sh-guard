@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.chocolatey.org/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>sh-guard</id>
+    <version>0.1.0</version>
+    <title>sh-guard</title>
+    <authors>aryanbhosale</authors>
+    <owners>aryanbhosale</owners>
+    <projectUrl>https://github.com/aryanbhosale/sh-guard</projectUrl>
+    <licenseUrl>https://github.com/aryanbhosale/sh-guard/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Semantic shell command safety classifier — AST-based risk scoring for AI coding agents. Analyzes shell commands using tree-sitter parsing, data-flow analysis, and context-aware risk scoring in under 100 microseconds.</description>
+    <summary>Semantic shell command safety classifier for AI coding agents</summary>
+    <tags>security shell bash safety classifier ai-agent mcp cli</tags>
+    <packageSourceUrl>https://github.com/aryanbhosale/sh-guard</packageSourceUrl>
+    <bugTrackerUrl>https://github.com/aryanbhosale/sh-guard/issues</bugTrackerUrl>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

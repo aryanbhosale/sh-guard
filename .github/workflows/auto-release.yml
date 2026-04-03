@@ -1,0 +1,40 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/*/Cargo.toml'
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changed: ${{ steps.version.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check version change
+        id: version
+        run: |
+          CURRENT=$(grep '^version' crates/sh-guard-core/Cargo.toml | head -1 | cut -d'"' -f2)
+          echo "version=v${CURRENT}" >> $GITHUB_OUTPUT
+          PREV=$(git show HEAD~1:crates/sh-guard-core/Cargo.toml 2>/dev/null | grep '^version' | head -1 | cut -d'"' -f2 || echo "")
+          if [ "$CURRENT" != "$PREV" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  create-tag:
+    needs: check-version
+    if: needs.check-version.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create and push tag
+        run: |
+          git tag ${{ needs.check-version.outputs.version }}
+          git push origin ${{ needs.check-version.outputs.version }}

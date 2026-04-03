@@ -12,13 +12,59 @@ AI coding agents execute shell commands on your behalf. Documented disasters inc
 
 sh-guard catches these before execution.
 
+## Install
+
+### Cargo (Rust)
+```bash
+cargo install sh-guard-cli
+```
+
+### Homebrew (macOS/Linux)
+```bash
+brew install aryanbhosale/tap/sh-guard
+```
+
+### npm
+```bash
+npm install -g sh-guard-cli
+```
+
+### Snap (Linux)
+```bash
+snap install sh-guard
+```
+
+### Chocolatey (Windows)
+```powershell
+choco install sh-guard
+```
+
+### WinGet (Windows)
+```powershell
+winget install aryanbhosale.sh-guard
+```
+
+### Docker
+```bash
+sh-guard "rm -rf ~/"
+# or
+docker run --rm ghcr.io/aryanbhosale/sh-guard "rm -rf ~/"
+```
+
+### GitHub Releases
+Download pre-built binaries from [Releases](https://github.com/aryanbhosale/sh-guard/releases) — macOS (ARM/x64), Linux (x64/ARM64), and Windows (x64).
+
+### From source
+```bash
+git clone https://github.com/aryanbhosale/sh-guard.git
+cd sh-guard
+cargo install --path crates/sh-guard-cli
+```
+
 ## Quick Start
 
 ### CLI
 ```bash
-# Install via cargo
-cargo install sh-guard-cli
-
 # Analyze a command
 sh-guard "rm -rf ~/"
 # CRITICAL (100): File deletion: targeting home directory, recursive deletion

@@ -1,0 +1,21 @@
+{
+  "name": "sh-guard-cli",
+  "version": "0.1.0",
+  "description": "Semantic shell command safety classifier CLI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aryanbhosale/sh-guard"
+  },
+  "bin": {
+    "sh-guard": "bin/sh-guard.js"
+  },
+  "keywords": ["security", "shell", "bash", "safety", "classifier", "ai-agent", "mcp", "cli"],
+  "optionalDependencies": {
+    "sh-guard-cli-darwin-arm64": "0.1.0",
+    "sh-guard-cli-darwin-x64": "0.1.0",
+    "sh-guard-cli-linux-arm64": "0.1.0",
+    "sh-guard-cli-linux-x64": "0.1.0",
+    "sh-guard-cli-win32-x64": "0.1.0"
+  }
+}

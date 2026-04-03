@@ -1,0 +1,11 @@
+target/
+.git/
+node_modules/
+__pycache__/
+*.node
+.venv/
+npm/
+choco/
+snap/
+dist/
+.github/
