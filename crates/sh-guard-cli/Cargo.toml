@@ -11,7 +11,7 @@ name = "sh-guard"
 path = "src/main.rs"
 
 [dependencies]
-sh-guard-core = { path = "../sh-guard-core" }
+sh-guard-core = { version = "0.1.0", path = "../sh-guard-core" }
 clap = { version = "4", features = ["derive"] }
 serde_json = "1"
 colored = "2"
