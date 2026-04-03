@@ -1,0 +1,15 @@
+[package]
+name = "sh-guard-python"
+version = "0.1.0"
+edition = "2021"
+description = "Python binding for sh-guard via PyO3"
+license = "MIT"
+
+[lib]
+name = "sh_guard"
+crate-type = ["cdylib"]
+
+[dependencies]
+sh-guard-core = { path = "../sh-guard-core" }
+pyo3 = { version = "0.23", features = ["extension-module"] }
+serde_json = "1"
