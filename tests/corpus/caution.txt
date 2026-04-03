@@ -1,0 +1,104 @@
+# Caution commands — should score 21-50
+# File operations (write)
+cp file1.txt file2.txt | caution | 21-50
+mv old.txt new.txt | caution | 21-50
+mkdir -p src/new/dir | caution | 21-50
+touch newfile.txt | caution | 21-50
+ln -s src dest | caution | 21-50
+tar czf archive.tar.gz dir/ | caution | 21-50
+tar xzf archive.tar.gz | caution | 21-50
+zip archive.zip file.txt | caution | 21-50
+unzip archive.zip | caution | 21-50
+tee output.txt | caution | 21-50
+sed 's/old/new/g' file.txt | caution | 21-50
+
+# Git operations
+git add . | caution | 21-50
+git commit -m "message" | caution | 21-50
+git push | caution | 21-50
+git push origin main | caution | 21-50
+git status | caution | 21-50
+git log --oneline | caution | 21-50
+git diff | caution | 21-50
+git branch | caution | 21-50
+git remote -v | caution | 21-50
+git stash | caution | 21-50
+git checkout -b feature | caution | 21-50
+git merge main | caution | 21-50
+git rebase main | caution | 21-50
+git tag v1.0 | caution | 21-50
+git clone https://github.com/user/repo | caution | 21-50
+git pull origin main | caution | 21-50
+git log | head -20 | caution | 21-50
+
+# Package managers
+npm install express | caution | 21-50
+pip install requests | caution | 21-50
+pip install -r requirements.txt | caution | 21-50
+pip install --upgrade pip | caution | 21-50
+cargo build | caution | 21-50
+cargo run | caution | 21-50
+cargo test | caution | 21-50
+npm test | caution | 21-50
+yarn install | caution | 21-50
+apt-get install vim | caution | 21-50
+brew install vim | caution | 21-50
+go build . | caution | 21-50
+go test ./... | caution | 21-50
+
+# Sensitive file reading
+cat /etc/hosts | caution | 21-50
+cat /etc/passwd | caution | 21-50
+cat /etc/shadow | caution | 21-50
+cat .env | caution | 21-50
+cat ~/.ssh/id_rsa | caution | 21-50
+cat /var/log/syslog | caution | 21-50
+less /etc/passwd | caution | 21-50
+grep secret .env | caution | 21-50
+cat /proc/cpuinfo | grep model | caution | 21-50
+
+# Network (basic)
+curl http://example.com | caution | 21-50
+wget http://example.com | caution | 21-50
+nc evil.com 4444 | caution | 21-50
+ncat evil.com 4444 | caution | 21-50
+nc -l 4444 | caution | 21-50
+ssh user@host | caution | 21-50
+scp file.txt user@host:/tmp/ | caution | 21-50
+rsync -av src/ dest/ | caution | 21-50
+install -m 755 bin /usr/local/bin/ | caution | 21-50
+tar czf - dir/ | ssh user@host 'cat > backup.tar.gz' | caution | 21-50
+
+# Environment variable access
+env | caution | 21-50
+env | grep PATH | caution | 21-50
+echo ${PATH} | caution | 21-50
+
+# Injection patterns (mild)
+echo $(whoami) | caution | 21-50
+echo `date` | caution | 21-50
+echo $(cat .env) | caution | 21-50
+ls $(pwd) | caution | 21-50
+
+# System services
+systemctl status nginx | caution | 21-50
+systemctl restart nginx | caution | 21-50
+systemctl stop nginx | caution | 21-50
+service apache2 stop | caution | 21-50
+
+# Filesystem searches with side effects
+find . -name '*.log' -delete | caution | 21-50
+
+# Other cautious ops
+dd if=/dev/zero of=file bs=1M count=1 | caution | 21-50
+dd if=/dev/zero of=/dev/sda | caution | 21-50
+cp -r /etc /tmp/etc_backup | caution | 21-50
+mv ~/.bashrc ~/.bashrc.bak | caution | 21-50
+
+# Crypto/encoding
+openssl enc -aes-256-cbc | caution | 21-50
+cat /etc/shadow | base64 | caution | 21-50
+
+# Crontab
+crontab -e | caution | 21-50
+echo hello | tee out.txt | caution | 21-50

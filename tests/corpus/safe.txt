@@ -1,0 +1,135 @@
+# Safe commands — should all score 0-20
+# Basic filesystem listing and info
+ls | safe | 0-20
+ls -la | safe | 0-20
+ls -la /tmp | safe | 0-20
+ls -lh | safe | 0-20
+ls -R src/ | safe | 0-20
+pwd | safe | 0-20
+whoami | safe | 0-20
+hostname | safe | 0-20
+uname -a | safe | 0-20
+date | safe | 0-20
+uptime | safe | 0-20
+id | safe | 0-20
+groups | safe | 0-20
+
+# Echo and printf
+echo hello | safe | 0-20
+echo "hello world" | safe | 0-20
+printf "%s\n" hello | safe | 0-20
+echo $HOME | safe | 0-20
+
+# Boolean and test
+true | safe | 0-20
+false | safe | 0-20
+test -f file.txt | safe | 0-20
+test -d /tmp | safe | 0-20
+
+# Lookup commands
+which ls | safe | 0-20
+type bash | safe | 0-20
+file README.md | safe | 0-20
+
+# Text processing (reading only, no file modification)
+wc -l file.txt | safe | 0-20
+grep pattern file.txt | safe | 0-20
+grep -r TODO src/ | safe | 0-20
+sort file.txt | safe | 0-20
+uniq counts.txt | safe | 0-20
+cut -d, -f1 data.csv | safe | 0-20
+tr a-z A-Z | safe | 0-20
+diff file1 file2 | safe | 0-20
+du -sh . | safe | 0-20
+df -h | safe | 0-20
+find . -name "*.rs" | safe | 0-20
+printenv HOME | safe | 0-20
+
+# File reading with cat/head/tail/less
+cat README.md | safe | 0-20
+head -10 file.txt | safe | 0-20
+tail -20 log.txt | safe | 0-20
+less file.txt | safe | 0-20
+more file.txt | safe | 0-20
+strings binary.bin | safe | 0-20
+od -c file.txt | safe | 0-20
+xxd file.txt | safe | 0-20
+base64 file.txt | safe | 0-20
+
+# Process listing
+ps aux | safe | 0-20
+top -l 1 | safe | 0-20
+htop | safe | 0-20
+lsof -i :8080 | safe | 0-20
+
+# Pipelines that are safe
+ls | grep foo | safe | 0-20
+cat file.txt | wc -l | safe | 0-20
+ps aux | grep node | safe | 0-20
+grep error log.txt | wc -l | safe | 0-20
+ls -la | sort -k5 -n | safe | 0-20
+
+# Git read-only (note: git commands score as caution in our engine)
+# These are intentionally not listed here because git scores 45
+
+# Simple variable reference
+echo hello world | safe | 0-20
+
+# Additional safe read-only commands
+cat .gitconfig | safe | 0-20
+cat Makefile | safe | 0-20
+cat Cargo.toml | safe | 0-20
+cat package.json | safe | 0-20
+head -1 README.md | safe | 0-20
+tail -5 README.md | safe | 0-20
+wc -w README.md | safe | 0-20
+wc -c file.txt | safe | 0-20
+grep -i error log.txt | safe | 0-20
+grep -c pattern file.txt | safe | 0-20
+grep -l TODO *.rs | safe | 0-20
+grep -n main src/lib.rs | safe | 0-20
+find . -type f -name "*.txt" | safe | 0-20
+find . -type d | safe | 0-20
+sort -r file.txt | safe | 0-20
+sort -n numbers.txt | safe | 0-20
+uniq -c data.txt | safe | 0-20
+cut -f1 data.tsv | safe | 0-20
+diff -u file1 file2 | safe | 0-20
+du -h /tmp | safe | 0-20
+df -i | safe | 0-20
+
+# Read pipelines
+cat log.txt | grep ERROR | wc -l | safe | 0-20
+ls -la /tmp | grep -v total | safe | 0-20
+find . -name "*.rs" | wc -l | safe | 0-20
+ps aux | grep -v grep | safe | 0-20
+cat data.csv | cut -d, -f2 | sort | safe | 0-20
+cat data.csv | cut -d, -f2 | sort | uniq -c | safe | 0-20
+
+# More echo variants
+echo -n hello | safe | 0-20
+echo -e "hello\nworld" | safe | 0-20
+printf "%-20s %s\n" name value | safe | 0-20
+
+# Additional lookup/info
+which grep | safe | 0-20
+which python | safe | 0-20
+type ls | safe | 0-20
+file /bin/ls | safe | 0-20
+test -x /bin/ls | safe | 0-20
+test -r file.txt | safe | 0-20
+test -w file.txt | safe | 0-20
+test -z "" | safe | 0-20
+test -n "hello" | safe | 0-20
+
+# Additional filesystem listing
+ls /home | safe | 0-20
+ls -1 | safe | 0-20
+ls -t | safe | 0-20
+cat CHANGELOG.md | safe | 0-20
+cat LICENSE | safe | 0-20
+head -5 Cargo.lock | safe | 0-20
+tail -1 file.txt | safe | 0-20
+grep -v comment file.txt | safe | 0-20
+grep -w word file.txt | safe | 0-20
+ls /var | safe | 0-20

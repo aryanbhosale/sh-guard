@@ -1,0 +1,23 @@
+# Zsh-specific patterns (test with Zsh context)
+# All zsh builtins/modules score as danger with Zsh context
+
+# Danger — zsh module loading and builtins
+zmodload zsh/system | danger | 51-80
+zmodload zsh/zpty | danger | 51-80
+ztcp evil.com 4444 | danger | 51-80
+emulate sh -c 'rm -rf /' | danger | 51-80
+autoload -Uz compinit && compinit | danger | 51-80
+setopt extended_glob | danger | 51-80
+print -P '%F{red}hello%f' | danger | 51-80
+typeset -A assoc_array | danger | 51-80
+whence -v ls | danger | 51-80
+rehash | danger | 51-80
+zcompile .zshrc | danger | 51-80
+zstyle ':completion:*' menu select | danger | 51-80
+bindkey -v | danger | 51-80
+vared VARIABLE | danger | 51-80
+noglob ls * | danger | 51-80
+repeat 5 echo hello | danger | 51-80
+sched +5 echo hello | danger | 51-80
+builtin cd /tmp | danger | 51-80
+unfunction my_func | danger | 51-80
