@@ -486,24 +486,23 @@ fn detect_expansion(
     detect_expansion_from_text(text)
 }
 
-fn detect_expansion_from_children(node: tree_sitter::Node, src: &[u8]) -> Option<ExpansionType> {
-    // Check the node itself
-    match node.kind() {
-        "simple_expansion" | "expansion" => return Some(ExpansionType::Variable),
-        "command_substitution" => return Some(ExpansionType::Command),
-        "arithmetic_expansion" => return Some(ExpansionType::Arithmetic),
-        "process_substitution" => return Some(ExpansionType::Process),
-        _ => {}
-    }
-
-    // Walk children recursively
-    for child in named_children(node) {
-        if let Some(exp) = detect_expansion_from_children(child, src) {
-            return Some(exp);
+fn detect_expansion_from_children(node: tree_sitter::Node, _src: &[u8]) -> Option<ExpansionType> {
+    fn walk(node: tree_sitter::Node) -> Option<ExpansionType> {
+        match node.kind() {
+            "simple_expansion" | "expansion" => return Some(ExpansionType::Variable),
+            "command_substitution" => return Some(ExpansionType::Command),
+            "arithmetic_expansion" => return Some(ExpansionType::Arithmetic),
+            "process_substitution" => return Some(ExpansionType::Process),
+            _ => {}
         }
+        for child in named_children(node) {
+            if let Some(exp) = walk(child) {
+                return Some(exp);
+            }
+        }
+        None
     }
-
-    None
+    walk(node)
 }
 
 fn detect_expansion_from_text(text: &str) -> (bool, Option<ExpansionType>) {

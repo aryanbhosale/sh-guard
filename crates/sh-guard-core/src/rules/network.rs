@@ -198,7 +198,7 @@ pub fn find_taint_escalation(
             source_matches(&r.source, source)
                 && r.sink == *sink
                 && match &r.propagator {
-                    None => !has_encoding_propagator || true, // No-propagator rules always apply
+                    None => true, // No-propagator rules always apply
                     Some(TaintPropPattern::Encoding) => has_encoding_propagator,
                     Some(TaintPropPattern::Any) => true,
                 }

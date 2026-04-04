@@ -291,7 +291,7 @@ pub fn match_sensitivity(path: &str) -> Option<(Sensitivity, &'static str)> {
         if matched {
             let dominated = best
                 .as_ref()
-                .map_or(true, |(s, _)| (rule.sensitivity.modifier()) > s.modifier());
+                .is_none_or(|(s, _)| (rule.sensitivity.modifier()) > s.modifier());
             if dominated {
                 best = Some((rule.sensitivity, rule.description));
             }

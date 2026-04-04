@@ -2,7 +2,6 @@
 extern crate napi_derive;
 
 use napi::bindgen_prelude::*;
-use sh_guard_core;
 
 #[napi(object)]
 pub struct JsClassifyContext {

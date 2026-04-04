@@ -43,7 +43,7 @@ pub fn classify(command: &str, context: Option<&ClassifyContext>) -> AnalysisRes
             && parsed
                 .segments
                 .first()
-                .map_or(true, |s| s.executable.is_none())
+                .is_none_or(|s| s.executable.is_none())
         {
             ParseConfidence::Fallback
         } else {
@@ -116,10 +116,7 @@ pub fn classify(command: &str, context: Option<&ClassifyContext>) -> AnalysisRes
     let reason = if analyses.len() == 1 {
         scorer::generate_reason(&analyses[0])
     } else {
-        let reasons: Vec<String> = analyses
-            .iter()
-            .map(|a| scorer::generate_reason(a))
-            .collect();
+        let reasons: Vec<String> = analyses.iter().map(scorer::generate_reason).collect();
         if let Some(ref pf) = pipeline_flow {
             if !pf.taint_flows.is_empty() {
                 let taint_desc = &pf.taint_flows[0].escalation_reason;

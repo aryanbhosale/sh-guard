@@ -109,10 +109,7 @@ pub static ZSH_RULES: &[ZshRule] = &[
             cmd.split_whitespace().any(|word| {
                 word.starts_with('=')
                     && word.len() > 1
-                    && word[1..]
-                        .chars()
-                        .next()
-                        .map_or(false, |c| c.is_alphabetic())
+                    && word[1..].chars().next().is_some_and(|c| c.is_alphabetic())
             })
         },
         score: 40,

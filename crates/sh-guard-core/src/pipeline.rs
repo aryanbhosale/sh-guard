@@ -36,9 +36,7 @@ pub fn analyze_pipeline(
 
             if let Some(sink_pat) = &sink_pattern {
                 // Check for encoding propagators between source and sink
-                let has_encoding = analyses[i + 1..i + 1 + j]
-                    .iter()
-                    .any(|mid| is_encoding_command(mid));
+                let has_encoding = analyses[i + 1..i + 1 + j].iter().any(is_encoding_command);
 
                 if let Some(source_pat) = &source_pattern {
                     if let Some(rule) =
@@ -150,17 +148,14 @@ fn classify_source(analysis: &CommandAnalysis) -> Option<TaintSourcePattern> {
             .executable
             .as_deref()
             .map(|e| e.rsplit('/').next().unwrap_or(e));
-        match exec_base {
-            Some("curl" | "wget" | "fetch") => {
-                // If it has POST/upload flags, it's a sink not a source
-                let is_sending = analysis
-                    .risk_factors
-                    .contains(&RiskFactor::NetworkExfiltration);
-                if !is_sending {
-                    return Some(TaintSourcePattern::NetworkDownload);
-                }
+        if let Some("curl" | "wget" | "fetch") = exec_base {
+            // If it has POST/upload flags, it's a sink not a source
+            let is_sending = analysis
+                .risk_factors
+                .contains(&RiskFactor::NetworkExfiltration);
+            if !is_sending {
+                return Some(TaintSourcePattern::NetworkDownload);
             }
-            _ => {}
         }
     }
 
