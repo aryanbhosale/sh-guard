@@ -63,7 +63,9 @@ fn cline_config() -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     {
         std::env::var("APPDATA").ok().map(|a| {
-            PathBuf::from(a).join("Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json")
+            PathBuf::from(a).join(
+                "Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json",
+            )
         })
     }
 }
@@ -73,11 +75,31 @@ fn windsurf_config() -> Option<PathBuf> {
 }
 
 const AGENTS: &[Agent] = &[
-    Agent { name: "Claude Code", kind: AgentKind::Hook, config_path: claude_code_config },
-    Agent { name: "Codex CLI", kind: AgentKind::Hook, config_path: codex_hooks_config },
-    Agent { name: "Cursor", kind: AgentKind::Mcp, config_path: cursor_config },
-    Agent { name: "Cline", kind: AgentKind::Mcp, config_path: cline_config },
-    Agent { name: "Windsurf", kind: AgentKind::Mcp, config_path: windsurf_config },
+    Agent {
+        name: "Claude Code",
+        kind: AgentKind::Hook,
+        config_path: claude_code_config,
+    },
+    Agent {
+        name: "Codex CLI",
+        kind: AgentKind::Hook,
+        config_path: codex_hooks_config,
+    },
+    Agent {
+        name: "Cursor",
+        kind: AgentKind::Mcp,
+        config_path: cursor_config,
+    },
+    Agent {
+        name: "Cline",
+        kind: AgentKind::Mcp,
+        config_path: cline_config,
+    },
+    Agent {
+        name: "Windsurf",
+        kind: AgentKind::Mcp,
+        config_path: windsurf_config,
+    },
 ];
 
 // ---------------------------------------------------------------------------
@@ -140,8 +162,8 @@ fn write_json(path: &Path, value: &Value) -> Result<(), String> {
         fs::create_dir_all(parent)
             .map_err(|e| format!("Failed to create {}: {}", parent.display(), e))?;
     }
-    let contents = serde_json::to_string_pretty(value)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
+    let contents =
+        serde_json::to_string_pretty(value).map_err(|e| format!("Failed to serialize: {}", e))?;
     fs::write(path, contents.as_bytes())
         .map_err(|e| format!("Failed to write {}: {}", path.display(), e))
 }
@@ -320,17 +342,11 @@ pub fn run_setup() {
             AgentKind::Hook => {
                 // For Claude Code: ~/.claude/ should exist
                 // For Codex: ~/.codex/ should exist
-                config_path
-                    .parent()
-                    .map(|p| p.exists())
-                    .unwrap_or(false)
+                config_path.parent().map(|p| p.exists()).unwrap_or(false)
             }
             AgentKind::Mcp => {
                 // Check if the parent directory (or grandparent for nested paths) exists
-                config_path
-                    .parent()
-                    .map(|p| p.exists())
-                    .unwrap_or(false)
+                config_path.parent().map(|p| p.exists()).unwrap_or(false)
             }
         };
 
@@ -348,10 +364,7 @@ pub fn run_setup() {
             },
             AgentKind::Mcp => {
                 if !mcp_available {
-                    println!(
-                        "  {} — skipped (sh-guard-mcp not on PATH)",
-                        agent.name
-                    );
+                    println!("  {} — skipped (sh-guard-mcp not on PATH)", agent.name);
                     skipped += 1;
                     continue;
                 }

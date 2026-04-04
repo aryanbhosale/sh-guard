@@ -134,11 +134,7 @@ fn cli_no_args_shows_error() {
 #[test]
 fn cli_exit_code_matches_risk_level() {
     let safe = sh_guard().arg("ls").output().unwrap();
-    assert_eq!(
-        safe.status.code(),
-        Some(0),
-        "ls should be safe (exit 0)"
-    );
+    assert_eq!(safe.status.code(), Some(0), "ls should be safe (exit 0)");
 
     let critical = sh_guard().arg("rm -rf ~/").output().unwrap();
     assert_eq!(
@@ -191,10 +187,7 @@ fn cli_stdin_multiple_commands() {
 
 #[test]
 fn cli_json_critical_has_risk_factors() {
-    let output = sh_guard()
-        .args(["--json", "rm -rf ~/"])
-        .output()
-        .unwrap();
+    let output = sh_guard().args(["--json", "rm -rf ~/"]).output().unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
     let parsed: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap();
 
@@ -246,9 +239,7 @@ fn cli_stdin_json_each_line_is_valid() {
 
     {
         let stdin = child.stdin.as_mut().unwrap();
-        stdin
-            .write_all(b"echo hello\nwhoami\npwd\n")
-            .unwrap();
+        stdin.write_all(b"echo hello\nwhoami\npwd\n").unwrap();
     }
 
     let output = child.wait_with_output().unwrap();

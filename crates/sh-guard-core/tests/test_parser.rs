@@ -20,8 +20,16 @@ fn simple_ls_la_tmp() {
     let seg = &p.segments[0];
     assert_eq!(seg.executable.as_deref(), Some("ls"));
     let arg_values: Vec<&str> = seg.args.iter().map(|a| a.value.as_str()).collect();
-    assert!(arg_values.contains(&"-la"), "expected -la in args: {:?}", arg_values);
-    assert!(arg_values.contains(&"/tmp"), "expected /tmp in args: {:?}", arg_values);
+    assert!(
+        arg_values.contains(&"-la"),
+        "expected -la in args: {:?}",
+        arg_values
+    );
+    assert!(
+        arg_values.contains(&"/tmp"),
+        "expected /tmp in args: {:?}",
+        arg_values
+    );
 }
 
 #[test]
@@ -38,8 +46,16 @@ fn simple_echo_hello_world() {
     let seg = &p.segments[0];
     assert_eq!(seg.executable.as_deref(), Some("echo"));
     let arg_values: Vec<&str> = seg.args.iter().map(|a| a.value.as_str()).collect();
-    assert!(arg_values.contains(&"hello"), "expected hello in args: {:?}", arg_values);
-    assert!(arg_values.contains(&"world"), "expected world in args: {:?}", arg_values);
+    assert!(
+        arg_values.contains(&"hello"),
+        "expected hello in args: {:?}",
+        arg_values
+    );
+    assert!(
+        arg_values.contains(&"world"),
+        "expected world in args: {:?}",
+        arg_values
+    );
 }
 
 #[test]
@@ -86,7 +102,10 @@ fn pipeline_three_stages() {
     let p = parse_bash("a | b | c");
     assert_eq!(p.segments.len(), 3);
     assert_eq!(p.chain_operators.len(), 2);
-    assert!(p.chain_operators.iter().all(|op| *op == ChainOperator::Pipe));
+    assert!(p
+        .chain_operators
+        .iter()
+        .all(|op| *op == ChainOperator::Pipe));
 }
 
 #[test]
@@ -94,7 +113,10 @@ fn pipeline_ten_stages() {
     let p = parse_bash("a | b | c | d | e | f | g | h | i | j");
     assert_eq!(p.segments.len(), 10, "segments: {:?}", p.segments);
     assert_eq!(p.chain_operators.len(), 9);
-    assert!(p.chain_operators.iter().all(|op| *op == ChainOperator::Pipe));
+    assert!(p
+        .chain_operators
+        .iter()
+        .all(|op| *op == ChainOperator::Pipe));
 }
 
 #[test]
@@ -149,11 +171,24 @@ fn compound_sequence() {
 fn compound_mixed() {
     let p = parse_bash("a | b && c ; d");
     // This should produce segments for a, b, c, d
-    assert!(p.segments.len() >= 3, "expected at least 3 segments, got {}: {:?}", p.segments.len(), p.segments);
+    assert!(
+        p.segments.len() >= 3,
+        "expected at least 3 segments, got {}: {:?}",
+        p.segments.len(),
+        p.segments
+    );
     // Should have mixed operators including at least Pipe and And
     let ops: Vec<&ChainOperator> = p.chain_operators.iter().collect();
-    assert!(ops.contains(&&ChainOperator::Pipe), "expected Pipe in {:?}", ops);
-    assert!(ops.contains(&&ChainOperator::And), "expected And in {:?}", ops);
+    assert!(
+        ops.contains(&&ChainOperator::Pipe),
+        "expected Pipe in {:?}",
+        ops
+    );
+    assert!(
+        ops.contains(&&ChainOperator::And),
+        "expected And in {:?}",
+        ops
+    );
 }
 
 #[test]
@@ -176,7 +211,10 @@ fn redirect_out() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     assert_eq!(seg.executable.as_deref(), Some("echo"));
-    assert!(!seg.redirections.is_empty(), "expected redirections, got none");
+    assert!(
+        !seg.redirections.is_empty(),
+        "expected redirections, got none"
+    );
     let redir = &seg.redirections[0];
     assert_eq!(redir.direction, RedirDirection::Out);
     assert_eq!(redir.target, "out.txt");
@@ -226,7 +264,11 @@ fn quote_single() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let quoted_args: Vec<&Argument> = seg.args.iter().filter(|a| a.is_quoted).collect();
-    assert!(!quoted_args.is_empty(), "expected a quoted arg, args: {:?}", seg.args);
+    assert!(
+        !quoted_args.is_empty(),
+        "expected a quoted arg, args: {:?}",
+        seg.args
+    );
     assert_eq!(quoted_args[0].quote_type, Some(QuoteType::Single));
 }
 
@@ -236,7 +278,11 @@ fn quote_double() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let quoted_args: Vec<&Argument> = seg.args.iter().filter(|a| a.is_quoted).collect();
-    assert!(!quoted_args.is_empty(), "expected a quoted arg, args: {:?}", seg.args);
+    assert!(
+        !quoted_args.is_empty(),
+        "expected a quoted arg, args: {:?}",
+        seg.args
+    );
     assert_eq!(quoted_args[0].quote_type, Some(QuoteType::Double));
 }
 
@@ -244,8 +290,15 @@ fn quote_double() {
 fn quote_ansi_c() {
     let p = parse_bash("echo $'hello\\n'");
     // Should trigger AnsiCQuoting warning
-    let has_ansi_warning = p.parse_warnings.iter().any(|w| matches!(w, ParseWarning::AnsiCQuoting));
-    assert!(has_ansi_warning, "expected AnsiCQuoting warning, got: {:?}", p.parse_warnings);
+    let has_ansi_warning = p
+        .parse_warnings
+        .iter()
+        .any(|w| matches!(w, ParseWarning::AnsiCQuoting));
+    assert!(
+        has_ansi_warning,
+        "expected AnsiCQuoting warning, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 // ========================================================
@@ -258,8 +311,15 @@ fn expansion_variable() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let expanded_args: Vec<&Argument> = seg.args.iter().filter(|a| a.has_expansion).collect();
-    assert!(!expanded_args.is_empty(), "expected expansion, args: {:?}", seg.args);
-    assert_eq!(expanded_args[0].expansion_type, Some(ExpansionType::Variable));
+    assert!(
+        !expanded_args.is_empty(),
+        "expected expansion, args: {:?}",
+        seg.args
+    );
+    assert_eq!(
+        expanded_args[0].expansion_type,
+        Some(ExpansionType::Variable)
+    );
 }
 
 #[test]
@@ -268,8 +328,15 @@ fn expansion_command_substitution() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let expanded_args: Vec<&Argument> = seg.args.iter().filter(|a| a.has_expansion).collect();
-    assert!(!expanded_args.is_empty(), "expected expansion, args: {:?}", seg.args);
-    assert_eq!(expanded_args[0].expansion_type, Some(ExpansionType::Command));
+    assert!(
+        !expanded_args.is_empty(),
+        "expected expansion, args: {:?}",
+        seg.args
+    );
+    assert_eq!(
+        expanded_args[0].expansion_type,
+        Some(ExpansionType::Command)
+    );
 }
 
 #[test]
@@ -278,7 +345,11 @@ fn expansion_glob() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let expanded_args: Vec<&Argument> = seg.args.iter().filter(|a| a.has_expansion).collect();
-    assert!(!expanded_args.is_empty(), "expected glob expansion, args: {:?}", seg.args);
+    assert!(
+        !expanded_args.is_empty(),
+        "expected glob expansion, args: {:?}",
+        seg.args
+    );
     assert_eq!(expanded_args[0].expansion_type, Some(ExpansionType::Glob));
 }
 
@@ -288,7 +359,11 @@ fn expansion_tilde() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let expanded_args: Vec<&Argument> = seg.args.iter().filter(|a| a.has_expansion).collect();
-    assert!(!expanded_args.is_empty(), "expected tilde expansion, args: {:?}", seg.args);
+    assert!(
+        !expanded_args.is_empty(),
+        "expected tilde expansion, args: {:?}",
+        seg.args
+    );
     assert_eq!(expanded_args[0].expansion_type, Some(ExpansionType::Tilde));
 }
 
@@ -298,8 +373,15 @@ fn expansion_backtick_command() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     let expanded_args: Vec<&Argument> = seg.args.iter().filter(|a| a.has_expansion).collect();
-    assert!(!expanded_args.is_empty(), "expected command expansion, args: {:?}", seg.args);
-    assert_eq!(expanded_args[0].expansion_type, Some(ExpansionType::Command));
+    assert!(
+        !expanded_args.is_empty(),
+        "expected command expansion, args: {:?}",
+        seg.args
+    );
+    assert_eq!(
+        expanded_args[0].expansion_type,
+        Some(ExpansionType::Command)
+    );
 }
 
 // ========================================================
@@ -310,8 +392,15 @@ fn expansion_backtick_command() {
 fn warning_control_characters() {
     let cmd = "echo \x01hello";
     let p = parse_bash(cmd);
-    let has_warning = p.parse_warnings.iter().any(|w| matches!(w, ParseWarning::ControlCharacters(_)));
-    assert!(has_warning, "expected ControlCharacters warning, got: {:?}", p.parse_warnings);
+    let has_warning = p
+        .parse_warnings
+        .iter()
+        .any(|w| matches!(w, ParseWarning::ControlCharacters(_)));
+    assert!(
+        has_warning,
+        "expected ControlCharacters warning, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 #[test]
@@ -319,39 +408,71 @@ fn warning_unicode_whitespace() {
     // \u{00A0} is non-breaking space
     let cmd = "echo\u{00A0}hello";
     let p = parse_bash(cmd);
-    let has_warning = p.parse_warnings.iter().any(|w| matches!(w, ParseWarning::UnicodeWhitespace(_)));
-    assert!(has_warning, "expected UnicodeWhitespace warning, got: {:?}", p.parse_warnings);
+    let has_warning = p
+        .parse_warnings
+        .iter()
+        .any(|w| matches!(w, ParseWarning::UnicodeWhitespace(_)));
+    assert!(
+        has_warning,
+        "expected UnicodeWhitespace warning, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 #[test]
 fn warning_carriage_return() {
     let cmd = "echo hello\r";
     let p = parse_bash(cmd);
-    let has_warning = p.parse_warnings.iter().any(|w| matches!(w, ParseWarning::CarriageReturn));
-    assert!(has_warning, "expected CarriageReturn warning, got: {:?}", p.parse_warnings);
+    let has_warning = p
+        .parse_warnings
+        .iter()
+        .any(|w| matches!(w, ParseWarning::CarriageReturn));
+    assert!(
+        has_warning,
+        "expected CarriageReturn warning, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 #[test]
 fn warning_ansi_c_quoting() {
     let cmd = "echo $'\\x41'";
     let p = parse_bash(cmd);
-    let has_warning = p.parse_warnings.iter().any(|w| matches!(w, ParseWarning::AnsiCQuoting));
-    assert!(has_warning, "expected AnsiCQuoting warning, got: {:?}", p.parse_warnings);
+    let has_warning = p
+        .parse_warnings
+        .iter()
+        .any(|w| matches!(w, ParseWarning::AnsiCQuoting));
+    assert!(
+        has_warning,
+        "expected AnsiCQuoting warning, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 #[test]
 fn warning_escaped_operators() {
     let cmd = "echo hello \\; rm -rf /";
     let p = parse_bash(cmd);
-    let has_warning = p.parse_warnings.iter().any(|w| matches!(w, ParseWarning::EscapedOperators));
-    assert!(has_warning, "expected EscapedOperators warning, got: {:?}", p.parse_warnings);
+    let has_warning = p
+        .parse_warnings
+        .iter()
+        .any(|w| matches!(w, ParseWarning::EscapedOperators));
+    assert!(
+        has_warning,
+        "expected EscapedOperators warning, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 #[test]
 fn warning_multiple_issues() {
     let cmd = "echo\u{00A0}\x01hello\r";
     let p = parse_bash(cmd);
-    assert!(p.parse_warnings.len() >= 2, "expected multiple warnings, got: {:?}", p.parse_warnings);
+    assert!(
+        p.parse_warnings.len() >= 2,
+        "expected multiple warnings, got: {:?}",
+        p.parse_warnings
+    );
 }
 
 // ========================================================
@@ -364,7 +485,11 @@ fn variable_assignment_before_command() {
     assert_eq!(p.segments.len(), 1);
     let seg = &p.segments[0];
     assert_eq!(seg.executable.as_deref(), Some("echo"));
-    assert!(!seg.assignments.is_empty(), "expected assignments, got: {:?}", seg.assignments);
+    assert!(
+        !seg.assignments.is_empty(),
+        "expected assignments, got: {:?}",
+        seg.assignments
+    );
     assert_eq!(seg.assignments[0].name, "FOO");
     assert_eq!(seg.assignments[0].value, "bar");
 }
@@ -378,5 +503,9 @@ fn subshell_detection() {
     let p = parse_bash("(cd /tmp && ls)");
     // Should detect subshell
     let has_subshell = p.segments.iter().any(|s| s.is_subshell);
-    assert!(has_subshell, "expected subshell, segments: {:?}", p.segments);
+    assert!(
+        has_subshell,
+        "expected subshell, segments: {:?}",
+        p.segments
+    );
 }

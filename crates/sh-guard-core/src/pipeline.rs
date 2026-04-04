@@ -41,11 +41,9 @@ pub fn analyze_pipeline(
                     .any(|mid| is_encoding_command(mid));
 
                 if let Some(source_pat) = &source_pattern {
-                    if let Some(rule) = network::find_taint_escalation(
-                        source_pat,
-                        sink_pat,
-                        has_encoding,
-                    ) {
+                    if let Some(rule) =
+                        network::find_taint_escalation(source_pat, sink_pat, has_encoding)
+                    {
                         let source_taint = match source_pat {
                             TaintSourcePattern::SensitiveFile => {
                                 let path = source_analysis
@@ -193,9 +191,11 @@ fn classify_sink(analysis: &CommandAnalysis) -> Option<TaintSinkPattern> {
 
     // Network sinks: curl with POST, wget with post, nc, etc.
     if analysis.intent.contains(&Intent::Network) {
-        let is_sending = analysis.flags.iter().any(|f| {
-            matches!(f.risk_factor, RiskFactor::NetworkExfiltration)
-        }) || matches!(exec_base, Some("nc" | "ncat" | "socat" | "telnet"));
+        let is_sending = analysis
+            .flags
+            .iter()
+            .any(|f| matches!(f.risk_factor, RiskFactor::NetworkExfiltration))
+            || matches!(exec_base, Some("nc" | "ncat" | "socat" | "telnet"));
 
         if is_sending {
             return Some(TaintSinkPattern::NetworkSend);
@@ -241,9 +241,7 @@ fn determine_flow_type(operators: &[ChainOperator]) -> FlowType {
         return FlowType::Pipe;
     }
 
-    let has_pipe = operators
-        .iter()
-        .any(|o| matches!(o, ChainOperator::Pipe));
+    let has_pipe = operators.iter().any(|o| matches!(o, ChainOperator::Pipe));
     let has_and = operators.iter().any(|o| matches!(o, ChainOperator::And));
     let has_or = operators.iter().any(|o| matches!(o, ChainOperator::Or));
     let has_seq = operators

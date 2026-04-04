@@ -306,12 +306,18 @@ fn sensitivity_without_context_falls_to_builtin() {
 
 #[test]
 fn adjustment_no_context_returns_5() {
-    assert_eq!(context::context_adjustment("/any/path", &Intent::Write, None), 5);
+    assert_eq!(
+        context::context_adjustment("/any/path", &Intent::Write, None),
+        5
+    );
 }
 
 #[test]
 fn adjustment_no_context_returns_5_for_read() {
-    assert_eq!(context::context_adjustment("/any/path", &Intent::Read, None), 5);
+    assert_eq!(
+        context::context_adjustment("/any/path", &Intent::Read, None),
+        5
+    );
 }
 
 // ========================================================
@@ -321,14 +327,20 @@ fn adjustment_no_context_returns_5_for_read() {
 #[test]
 fn adjustment_inside_project_write_negative() {
     let ctx = ctx_full();
-    let adj = context::context_adjustment("/home/user/project/src/file.rs", &Intent::Write, Some(&ctx));
-    assert!(adj < 0, "write inside project should be negative, got {}", adj);
+    let adj =
+        context::context_adjustment("/home/user/project/src/file.rs", &Intent::Write, Some(&ctx));
+    assert!(
+        adj < 0,
+        "write inside project should be negative, got {}",
+        adj
+    );
 }
 
 #[test]
 fn adjustment_inside_project_read_zero() {
     let ctx = ctx_full();
-    let adj = context::context_adjustment("/home/user/project/src/file.rs", &Intent::Read, Some(&ctx));
+    let adj =
+        context::context_adjustment("/home/user/project/src/file.rs", &Intent::Read, Some(&ctx));
     // Read inside project, but still inside home; cwd starts with home so no home penalty
     // No project escaping penalty, no protected paths match
     assert_eq!(adj, 0);
@@ -377,14 +389,22 @@ fn adjustment_outside_project_write_positive() {
     let ctx = ctx_full();
     let adj = context::context_adjustment("/tmp/outside", &Intent::Write, Some(&ctx));
     // +20 for escaping project boundary
-    assert!(adj > 0, "write outside project should be positive, got {}", adj);
+    assert!(
+        adj > 0,
+        "write outside project should be positive, got {}",
+        adj
+    );
 }
 
 #[test]
 fn adjustment_outside_project_delete_positive() {
     let ctx = ctx_full();
     let adj = context::context_adjustment("/etc/hosts", &Intent::Delete, Some(&ctx));
-    assert!(adj > 0, "delete outside project should be positive, got {}", adj);
+    assert!(
+        adj > 0,
+        "delete outside project should be positive, got {}",
+        adj
+    );
 }
 
 // ========================================================
@@ -394,11 +414,8 @@ fn adjustment_outside_project_delete_positive() {
 #[test]
 fn adjustment_protected_path_adds_25() {
     let ctx = ctx_full();
-    let adj = context::context_adjustment(
-        "/home/user/project/important.db",
-        &Intent::Read,
-        Some(&ctx),
-    );
+    let adj =
+        context::context_adjustment("/home/user/project/important.db", &Intent::Read, Some(&ctx));
     // Inside project (no write/delete bonus), but protected path = +25
     assert!(adj >= 25, "protected path should add 25, got {}", adj);
 }
@@ -430,7 +447,11 @@ fn adjustment_targets_home_from_outside() {
     };
     let adj = context::context_adjustment("/home/user/.bashrc", &Intent::Read, Some(&ctx));
     // cwd=/tmp does not start with /home/user, so +15 home penalty
-    assert!(adj >= 15, "should penalize home access from outside, got {}", adj);
+    assert!(
+        adj >= 15,
+        "should penalize home access from outside, got {}",
+        adj
+    );
 }
 
 #[test]
@@ -444,7 +465,11 @@ fn adjustment_targets_home_exact() {
     };
     let adj = context::context_adjustment("/home/user", &Intent::Read, Some(&ctx));
     // cwd starts with /home/user, but path == home_normalized triggers +15
-    assert!(adj >= 15, "targeting home dir exactly should penalize, got {}", adj);
+    assert!(
+        adj >= 15,
+        "targeting home dir exactly should penalize, got {}",
+        adj
+    );
 }
 
 // ========================================================
@@ -474,7 +499,10 @@ fn normalize_multiple_trailing_slashes() {
 
 #[test]
 fn normalize_double_slashes() {
-    assert_eq!(context::normalize_path("/home//user//file"), "/home/user/file");
+    assert_eq!(
+        context::normalize_path("/home//user//file"),
+        "/home/user/file"
+    );
 }
 
 #[test]
@@ -496,7 +524,10 @@ fn normalize_tilde() {
 
 #[test]
 fn normalize_plain_path() {
-    assert_eq!(context::normalize_path("/home/user/file"), "/home/user/file");
+    assert_eq!(
+        context::normalize_path("/home/user/file"),
+        "/home/user/file"
+    );
 }
 
 #[test]

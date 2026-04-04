@@ -1,29 +1,29 @@
 pub mod types;
 pub use types::*;
 
+#[doc(hidden)]
+pub mod analyzer;
+#[doc(hidden)]
+pub mod context;
 pub(crate) mod parser;
 #[doc(hidden)]
 pub mod parser_fallback;
 #[doc(hidden)]
+pub mod pipeline;
+#[doc(hidden)]
 pub mod rules;
 #[doc(hidden)]
-pub mod context;
-#[doc(hidden)]
-pub mod analyzer;
-#[doc(hidden)]
 pub mod scorer;
-#[doc(hidden)]
-pub mod pipeline;
 
 #[doc(hidden)]
 pub mod test_internals {
+    pub use crate::analyzer;
+    pub use crate::context;
     pub use crate::parser::*;
     pub use crate::parser_fallback;
-    pub use crate::rules;
-    pub use crate::context;
-    pub use crate::analyzer;
-    pub use crate::scorer;
     pub use crate::pipeline;
+    pub use crate::rules;
+    pub use crate::scorer;
 }
 
 /// Classify a shell command and return a rich analysis.
@@ -116,7 +116,10 @@ pub fn classify(command: &str, context: Option<&ClassifyContext>) -> AnalysisRes
     let reason = if analyses.len() == 1 {
         scorer::generate_reason(&analyses[0])
     } else {
-        let reasons: Vec<String> = analyses.iter().map(|a| scorer::generate_reason(a)).collect();
+        let reasons: Vec<String> = analyses
+            .iter()
+            .map(|a| scorer::generate_reason(a))
+            .collect();
         if let Some(ref pf) = pipeline_flow {
             if !pf.taint_flows.is_empty() {
                 let taint_desc = &pf.taint_flows[0].escalation_reason;
@@ -154,10 +157,7 @@ pub fn risk_level(command: &str) -> RiskLevel {
 }
 
 /// Batch: classify multiple commands.
-pub fn classify_batch(
-    commands: &[&str],
-    context: Option<&ClassifyContext>,
-) -> Vec<AnalysisResult> {
+pub fn classify_batch(commands: &[&str], context: Option<&ClassifyContext>) -> Vec<AnalysisResult> {
     commands.iter().map(|cmd| classify(cmd, context)).collect()
 }
 

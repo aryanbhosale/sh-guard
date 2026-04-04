@@ -47,9 +47,7 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     },
     InjectionPattern {
         name: "ifs_injection",
-        detect_fn: |unquoted, _raw| {
-            unquoted.contains("$IFS") || unquoted.contains("${IFS")
-        },
+        detect_fn: |unquoted, _raw| unquoted.contains("$IFS") || unquoted.contains("${IFS"),
         score: 50,
         risk_factor: RiskFactor::ShellInjection,
         description: "IFS variable manipulation",
@@ -64,7 +62,8 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     InjectionPattern {
         name: "unicode_whitespace",
         detect_fn: |_unquoted, raw| {
-            raw.chars().any(|c| c.is_whitespace() && !matches!(c, ' ' | '\t' | '\n' | '\r'))
+            raw.chars()
+                .any(|c| c.is_whitespace() && !matches!(c, ' ' | '\t' | '\n' | '\r'))
         },
         score: 45,
         risk_factor: RiskFactor::ShellInjection,
@@ -73,7 +72,8 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     InjectionPattern {
         name: "control_characters",
         detect_fn: |_unquoted, raw| {
-            raw.bytes().any(|b| matches!(b, 0x00..=0x08 | 0x0E..=0x1F | 0x7F))
+            raw.bytes()
+                .any(|b| matches!(b, 0x00..=0x08 | 0x0E..=0x1F | 0x7F))
         },
         score: 45,
         risk_factor: RiskFactor::ShellInjection,
@@ -120,7 +120,7 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
             // Must contain {, at least one comma, and }
             if let Some(start) = unquoted.find('{') {
                 if let Some(end) = unquoted[start..].find('}') {
-                    return unquoted[start..start+end].contains(',');
+                    return unquoted[start..start + end].contains(',');
                 }
             }
             false
@@ -140,9 +140,7 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     },
     InjectionPattern {
         name: "dev_tcp_udp",
-        detect_fn: |_unquoted, raw| {
-            raw.contains("/dev/tcp/") || raw.contains("/dev/udp/")
-        },
+        detect_fn: |_unquoted, raw| raw.contains("/dev/tcp/") || raw.contains("/dev/udp/"),
         score: 55,
         risk_factor: RiskFactor::NetworkExfiltration,
         description: "Bash /dev/tcp or /dev/udp network access",
@@ -150,7 +148,8 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     InjectionPattern {
         name: "base64_pipe",
         detect_fn: |_unquoted, raw| {
-            (raw.contains("base64") || raw.contains("b64")) && (raw.contains("|") || raw.contains(">"))
+            (raw.contains("base64") || raw.contains("b64"))
+                && (raw.contains("|") || raw.contains(">"))
         },
         score: 30,
         risk_factor: RiskFactor::ObfuscatedCommand,
@@ -158,27 +157,21 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     },
     InjectionPattern {
         name: "eval_usage",
-        detect_fn: |unquoted, _raw| {
-            unquoted.starts_with("eval ") || unquoted.contains(" eval ")
-        },
+        detect_fn: |unquoted, _raw| unquoted.starts_with("eval ") || unquoted.contains(" eval "),
         score: 50,
         risk_factor: RiskFactor::CommandExecution,
         description: "eval command usage",
     },
     InjectionPattern {
         name: "hex_escape_sequences",
-        detect_fn: |_unquoted, raw| {
-            raw.contains("\\x") || raw.contains("\\u")
-        },
+        detect_fn: |_unquoted, raw| raw.contains("\\x") || raw.contains("\\u"),
         score: 35,
         risk_factor: RiskFactor::ObfuscatedCommand,
         description: "Hex/unicode escape sequences (obfuscation)",
     },
     InjectionPattern {
         name: "ld_preload",
-        detect_fn: |_unquoted, raw| {
-            raw.contains("LD_PRELOAD") || raw.contains("LD_LIBRARY_PATH")
-        },
+        detect_fn: |_unquoted, raw| raw.contains("LD_PRELOAD") || raw.contains("LD_LIBRARY_PATH"),
         score: 55,
         risk_factor: RiskFactor::PathInjection,
         description: "LD_PRELOAD/LD_LIBRARY_PATH injection",
@@ -187,7 +180,8 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
         name: "path_injection",
         detect_fn: |_unquoted, raw| {
             raw.contains("PATH=") && !raw.contains("$PATH")
-                || raw.contains("PATH=/tmp") || raw.contains("PATH=/var")
+                || raw.contains("PATH=/tmp")
+                || raw.contains("PATH=/var")
         },
         score: 50,
         risk_factor: RiskFactor::PathInjection,
@@ -213,8 +207,11 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
         name: "pipe_to_shell",
         detect_fn: |_unquoted, raw| {
             let lower = raw.to_lowercase();
-            lower.contains("| bash") || lower.contains("| sh") || lower.contains("| zsh")
-                || lower.contains("|bash") || lower.contains("|sh")
+            lower.contains("| bash")
+                || lower.contains("| sh")
+                || lower.contains("| zsh")
+                || lower.contains("|bash")
+                || lower.contains("|sh")
         },
         score: 55,
         risk_factor: RiskFactor::PipeToExecution,
@@ -224,7 +221,10 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
 
 /// Check a command against all injection patterns.
 /// Returns list of (pattern_name, score, risk_factor, description) for matches.
-pub fn detect_injections(unquoted: &str, raw: &str) -> Vec<(&'static str, u8, RiskFactor, &'static str)> {
+pub fn detect_injections(
+    unquoted: &str,
+    raw: &str,
+) -> Vec<(&'static str, u8, RiskFactor, &'static str)> {
     INJECTION_PATTERNS
         .iter()
         .filter(|p| (p.detect_fn)(unquoted, raw))

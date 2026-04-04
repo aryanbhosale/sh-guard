@@ -24,11 +24,7 @@ fn detects_rule(name: &str, cmd: &str) -> bool {
 fn no_duplicate_rule_names() {
     let mut seen = HashSet::new();
     for r in rules::zsh::ZSH_RULES {
-        assert!(
-            seen.insert(r.name),
-            "duplicate zsh rule name: '{}'",
-            r.name
-        );
+        assert!(seen.insert(r.name), "duplicate zsh rule name: '{}'", r.name);
     }
 }
 
@@ -232,7 +228,10 @@ fn sysread_syswrite_negative() {
 
 #[test]
 fn glob_qualifier_exec_positive_e() {
-    assert!(detects_rule("glob_qualifier_exec", "print *(e:'[[ -d $REPLY ]]':)"));
+    assert!(detects_rule(
+        "glob_qualifier_exec",
+        "print *(e:'[[ -d $REPLY ]]':)"
+    ));
 }
 
 #[test]

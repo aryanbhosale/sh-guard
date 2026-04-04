@@ -114,9 +114,7 @@ pub fn generate_reason(analysis: &CommandAnalysis) -> String {
             match target.scope {
                 TargetScope::Root => parts.push("targeting filesystem root".to_string()),
                 TargetScope::Home => parts.push("targeting home directory".to_string()),
-                TargetScope::System => {
-                    parts.push(format!("targeting system path {}", path))
-                }
+                TargetScope::System => parts.push(format!("targeting system path {}", path)),
                 _ => {}
             }
             match target.sensitivity {

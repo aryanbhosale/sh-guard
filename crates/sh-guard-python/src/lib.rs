@@ -3,15 +3,11 @@ use pyo3::types::PyDict;
 
 /// Parse a Python dict into a ClassifyContext.
 fn parse_context(dict: &Bound<'_, PyDict>) -> PyResult<sh_guard_core::ClassifyContext> {
-    let cwd: Option<String> = dict
-        .get_item("cwd")?
-        .and_then(|v| v.extract().ok());
+    let cwd: Option<String> = dict.get_item("cwd")?.and_then(|v| v.extract().ok());
     let project_root: Option<String> = dict
         .get_item("project_root")?
         .and_then(|v| v.extract().ok());
-    let home_dir: Option<String> = dict
-        .get_item("home_dir")?
-        .and_then(|v| v.extract().ok());
+    let home_dir: Option<String> = dict.get_item("home_dir")?.and_then(|v| v.extract().ok());
     let protected_paths: Vec<String> = dict
         .get_item("protected_paths")?
         .and_then(|v| v.extract().ok())
@@ -34,7 +30,10 @@ fn parse_context(dict: &Bound<'_, PyDict>) -> PyResult<sh_guard_core::ClassifyCo
 }
 
 /// Convert an AnalysisResult to a Python dict via JSON round-trip.
-fn result_to_pydict<'py>(py: Python<'py>, result: &sh_guard_core::AnalysisResult) -> PyResult<Bound<'py, PyAny>> {
+fn result_to_pydict<'py>(
+    py: Python<'py>,
+    result: &sh_guard_core::AnalysisResult,
+) -> PyResult<Bound<'py, PyAny>> {
     let json_str = serde_json::to_string(result)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("{}", e)))?;
     let json_mod = py.import("json")?;
@@ -51,7 +50,11 @@ fn result_to_pydict<'py>(py: Python<'py>, result: &sh_guard_core::AnalysisResult
 ///     A dict containing score, level, risk_factors, pipeline_flow, etc.
 #[pyfunction]
 #[pyo3(signature = (command, context=None))]
-fn classify(py: Python<'_>, command: &str, context: Option<&Bound<'_, PyDict>>) -> PyResult<PyObject> {
+fn classify(
+    py: Python<'_>,
+    command: &str,
+    context: Option<&Bound<'_, PyDict>>,
+) -> PyResult<PyObject> {
     let ctx = context.map(parse_context).transpose()?;
     let result = sh_guard_core::classify(command, ctx.as_ref());
     let dict = result_to_pydict(py, &result)?;
@@ -86,7 +89,11 @@ fn risk_level(command: &str) -> String {
 ///     A list of analysis dicts.
 #[pyfunction]
 #[pyo3(signature = (commands, context=None))]
-fn classify_batch(py: Python<'_>, commands: Vec<String>, context: Option<&Bound<'_, PyDict>>) -> PyResult<PyObject> {
+fn classify_batch(
+    py: Python<'_>,
+    commands: Vec<String>,
+    context: Option<&Bound<'_, PyDict>>,
+) -> PyResult<PyObject> {
     let ctx = context.map(parse_context).transpose()?;
     let strs: Vec<&str> = commands.iter().map(|s| s.as_str()).collect();
     let results = sh_guard_core::classify_batch(&strs, ctx.as_ref());

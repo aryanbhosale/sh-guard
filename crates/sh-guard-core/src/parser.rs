@@ -268,8 +268,13 @@ fn walk_program(
             }
             segments.push(seg);
         }
-        "negated_command" | "compound_statement" | "if_statement" | "while_statement"
-        | "for_statement" | "case_statement" | "function_definition" => {
+        "negated_command"
+        | "compound_statement"
+        | "if_statement"
+        | "while_statement"
+        | "for_statement"
+        | "case_statement"
+        | "function_definition" => {
             let mut seg = empty_segment();
             seg.raw = node_text(node, src).to_string();
             segments.push(seg);
@@ -401,7 +406,10 @@ fn extract_any_command(node: tree_sitter::Node, src: &[u8]) -> CommandSegment {
             let mut seg = empty_segment();
             seg.raw = node_text(node, src).to_string();
             for child in named_children(node) {
-                if matches!(child.kind(), "command" | "pipeline" | "redirected_statement") {
+                if matches!(
+                    child.kind(),
+                    "command" | "pipeline" | "redirected_statement"
+                ) {
                     return extract_any_command(child, src);
                 }
             }
@@ -478,10 +486,7 @@ fn detect_expansion(
     detect_expansion_from_text(text)
 }
 
-fn detect_expansion_from_children(
-    node: tree_sitter::Node,
-    src: &[u8],
-) -> Option<ExpansionType> {
+fn detect_expansion_from_children(node: tree_sitter::Node, src: &[u8]) -> Option<ExpansionType> {
     // Check the node itself
     match node.kind() {
         "simple_expansion" | "expansion" => return Some(ExpansionType::Variable),

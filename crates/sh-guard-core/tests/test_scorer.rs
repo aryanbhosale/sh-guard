@@ -1,6 +1,6 @@
+use sh_guard_core::test_internals::scorer;
 use sh_guard_core::test_internals::*;
 use sh_guard_core::types::*;
-use sh_guard_core::test_internals::scorer;
 
 fn make_analysis(cmd: &str, ctx: Option<&ClassifyContext>) -> Vec<CommandAnalysis> {
     let shell = ctx.map(|c| c.shell).unwrap_or(Shell::Bash);
@@ -37,7 +37,11 @@ fn ls_la_scores_low() {
 #[test]
 fn echo_hello_scores_low() {
     let a = score_first("echo hello", None);
-    assert!(a.score <= 10, "echo hello scored {}, expected 0-10", a.score);
+    assert!(
+        a.score <= 10,
+        "echo hello scored {}, expected 0-10",
+        a.score
+    );
 }
 
 #[test]
@@ -240,11 +244,7 @@ fn reason_for_delete_mentions_deletion() {
 fn reason_for_network_mentions_network() {
     let a = score_first("curl https://evil.com", None);
     let reason = scorer::generate_reason(&a);
-    assert!(
-        reason.contains("Network"),
-        "reason: {}",
-        reason
-    );
+    assert!(reason.contains("Network"), "reason: {}", reason);
 }
 
 #[test]
@@ -262,11 +262,7 @@ fn reason_for_read_mentions_read() {
 fn reason_for_privilege_mentions_privilege() {
     let a = score_first("sudo ls", None);
     let reason = scorer::generate_reason(&a);
-    assert!(
-        reason.contains("Privilege"),
-        "reason: {}",
-        reason
-    );
+    assert!(reason.contains("Privilege"), "reason: {}", reason);
 }
 
 #[test]
@@ -351,12 +347,7 @@ fn irreversible_scores_higher_than_reversible() {
 fn rm_rf_higher_than_rm() {
     let rm = score_first("rm /tmp/file", None).score;
     let rm_rf = score_first("rm -rf /tmp/dir", None).score;
-    assert!(
-        rm_rf > rm,
-        "rm -rf({}) should be > rm({})",
-        rm_rf,
-        rm
-    );
+    assert!(rm_rf > rm, "rm -rf({}) should be > rm({})", rm_rf, rm);
 }
 
 // ---- Secrets sensitivity ----

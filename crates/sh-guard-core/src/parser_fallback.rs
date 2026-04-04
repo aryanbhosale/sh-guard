@@ -228,7 +228,10 @@ mod tests {
     #[test]
     fn has_tree_sitter_error_warning() {
         let parsed = parse_fallback("echo hello");
-        assert!(parsed.parse_warnings.iter().any(|w| matches!(w, ParseWarning::TreeSitterError(_))));
+        assert!(parsed
+            .parse_warnings
+            .iter()
+            .any(|w| matches!(w, ParseWarning::TreeSitterError(_))));
     }
 
     #[test]
@@ -276,7 +279,10 @@ mod tests {
         let parsed = parse_fallback("a | b | c | d | e");
         assert_eq!(parsed.segments.len(), 5);
         assert_eq!(parsed.chain_operators.len(), 4);
-        assert!(parsed.chain_operators.iter().all(|op| *op == ChainOperator::Pipe));
+        assert!(parsed
+            .chain_operators
+            .iter()
+            .all(|op| *op == ChainOperator::Pipe));
     }
 
     #[test]

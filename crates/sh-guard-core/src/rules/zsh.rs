@@ -55,9 +55,15 @@ pub static ZSH_RULES: &[ZshRule] = &[
     ZshRule {
         name: "zsh_files_module",
         detect_fn: |cmd| {
-            cmd.contains("zsh/files") || cmd.contains("zf_rm") || cmd.contains("zf_mv")
-                || cmd.contains("zf_chmod") || cmd.contains("zf_chown") || cmd.contains("zf_mkdir")
-                || cmd.contains("zf_rmdir") || cmd.contains("zf_ln") || cmd.contains("zf_chgrp")
+            cmd.contains("zsh/files")
+                || cmd.contains("zf_rm")
+                || cmd.contains("zf_mv")
+                || cmd.contains("zf_chmod")
+                || cmd.contains("zf_chown")
+                || cmd.contains("zf_mkdir")
+                || cmd.contains("zf_rmdir")
+                || cmd.contains("zf_ln")
+                || cmd.contains("zf_chgrp")
         },
         score: 45,
         risk_factor: RiskFactor::ZshModuleLoading,
@@ -79,7 +85,9 @@ pub static ZSH_RULES: &[ZshRule] = &[
     },
     ZshRule {
         name: "sysread_syswrite",
-        detect_fn: |cmd| cmd.contains("sysread") || cmd.contains("syswrite") || cmd.contains("sysseek"),
+        detect_fn: |cmd| {
+            cmd.contains("sysread") || cmd.contains("syswrite") || cmd.contains("sysseek")
+        },
         score: 50,
         risk_factor: RiskFactor::ZshModuleLoading,
         description: "sysread/syswrite/sysseek (raw I/O)",
@@ -99,7 +107,12 @@ pub static ZSH_RULES: &[ZshRule] = &[
         detect_fn: |cmd| {
             // =cmd at word start: zsh expands =foo to /path/to/foo
             cmd.split_whitespace().any(|word| {
-                word.starts_with('=') && word.len() > 1 && word[1..].chars().next().map_or(false, |c| c.is_alphabetic())
+                word.starts_with('=')
+                    && word.len() > 1
+                    && word[1..]
+                        .chars()
+                        .next()
+                        .map_or(false, |c| c.is_alphabetic())
             })
         },
         score: 40,

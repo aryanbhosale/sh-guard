@@ -77,7 +77,10 @@ fn risk_level_ordering() {
 
 #[test]
 fn quick_decision_from_level_safe() {
-    assert_eq!(QuickDecision::from_level(RiskLevel::Safe), QuickDecision::Safe);
+    assert_eq!(
+        QuickDecision::from_level(RiskLevel::Safe),
+        QuickDecision::Safe
+    );
 }
 
 #[test]
@@ -221,7 +224,9 @@ fn reversibility_modifiers() {
 // 8. Serde round-trip tests
 // ========================================================
 
-fn serde_roundtrip<T: serde::Serialize + serde::de::DeserializeOwned + std::fmt::Debug + PartialEq>(
+fn serde_roundtrip<
+    T: serde::Serialize + serde::de::DeserializeOwned + std::fmt::Debug + PartialEq,
+>(
     val: &T,
 ) {
     let json = serde_json::to_string(val).expect("serialize");

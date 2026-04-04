@@ -51,7 +51,10 @@ reversibility = "hard_to_reverse"
     assert_eq!(rs.user_commands[0].name, "my-deploy");
     assert_eq!(rs.user_commands[0].intent, Intent::Execute);
     assert_eq!(rs.user_commands[0].base_weight, 60);
-    assert_eq!(rs.user_commands[0].reversibility, Reversibility::HardToReverse);
+    assert_eq!(
+        rs.user_commands[0].reversibility,
+        Reversibility::HardToReverse
+    );
 }
 
 #[test]

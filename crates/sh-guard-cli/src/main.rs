@@ -146,9 +146,7 @@ impl TaintSinkLabel for sh_guard_core::TaintSink {
     fn technique_label(&self) -> Option<String> {
         match self {
             sh_guard_core::TaintSink::NetworkSend => Some("T1041".to_string()),
-            sh_guard_core::TaintSink::FileWrite { path } => {
-                Some(format!("file write: {}", path))
-            }
+            sh_guard_core::TaintSink::FileWrite { path } => Some(format!("file write: {}", path)),
             sh_guard_core::TaintSink::Execution => Some("execution sink".to_string()),
             sh_guard_core::TaintSink::Display => None,
         }

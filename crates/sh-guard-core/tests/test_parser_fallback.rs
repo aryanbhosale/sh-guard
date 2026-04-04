@@ -142,9 +142,10 @@ fn whitespace_only_produces_one_segment() {
 #[test]
 fn fallback_warning_present() {
     let parsed = parse_fallback("anything");
-    assert!(parsed.parse_warnings.iter().any(|w| {
-        matches!(w, ParseWarning::TreeSitterError(msg) if msg.contains("fallback"))
-    }));
+    assert!(parsed
+        .parse_warnings
+        .iter()
+        .any(|w| { matches!(w, ParseWarning::TreeSitterError(msg) if msg.contains("fallback")) }));
 }
 
 // ========================================================
@@ -206,7 +207,9 @@ fn long_pipeline_10_segments() {
 
 #[test]
 fn curl_with_many_flags() {
-    let parsed = parse_fallback("curl -X POST https://example.com -d @file.txt -H 'Content-Type: application/json'");
+    let parsed = parse_fallback(
+        "curl -X POST https://example.com -d @file.txt -H 'Content-Type: application/json'",
+    );
     let seg = &parsed.segments[0];
     assert_eq!(seg.executable.as_deref(), Some("curl"));
     assert!(seg.args.len() >= 4);

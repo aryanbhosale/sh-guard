@@ -1,5 +1,5 @@
-use sh_guard_core::test_internals::rules;
 use rules::network::*;
+use sh_guard_core::test_internals::rules;
 use std::collections::HashSet;
 
 // ========================================================
@@ -53,7 +53,11 @@ fn all_rules_have_names() {
 #[test]
 fn all_rules_have_descriptions() {
     for r in TAINT_RULES {
-        assert!(!r.description.is_empty(), "rule '{}' has empty description", r.name);
+        assert!(
+            !r.description.is_empty(),
+            "rule '{}' has empty description",
+            r.name
+        );
     }
 }
 
@@ -77,7 +81,11 @@ fn all_rules_have_positive_escalation() {
 
 #[test]
 fn sensitive_file_to_network_send() {
-    let result = find(&TaintSourcePattern::SensitiveFile, &TaintSinkPattern::NetworkSend, false);
+    let result = find(
+        &TaintSourcePattern::SensitiveFile,
+        &TaintSinkPattern::NetworkSend,
+        false,
+    );
     assert_eq!(result, Some("sensitive_file_to_network"));
 }
 
@@ -109,7 +117,11 @@ fn sensitive_file_to_file_write() {
 
 #[test]
 fn env_var_to_network_send() {
-    let result = find(&TaintSourcePattern::EnvironmentVar, &TaintSinkPattern::NetworkSend, false);
+    let result = find(
+        &TaintSourcePattern::EnvironmentVar,
+        &TaintSinkPattern::NetworkSend,
+        false,
+    );
     // env_var_to_network (30) vs any_read_to_network (20) -- highest is 30
     assert_eq!(result, Some("env_var_to_network"));
 }
@@ -154,19 +166,31 @@ fn network_download_to_file_write() {
 
 #[test]
 fn any_read_to_network_send() {
-    let result = find(&TaintSourcePattern::AnyRead, &TaintSinkPattern::NetworkSend, false);
+    let result = find(
+        &TaintSourcePattern::AnyRead,
+        &TaintSinkPattern::NetworkSend,
+        false,
+    );
     assert_eq!(result, Some("any_read_to_network"));
 }
 
 #[test]
 fn any_read_to_execution() {
-    let result = find(&TaintSourcePattern::AnyRead, &TaintSinkPattern::Execution, false);
+    let result = find(
+        &TaintSourcePattern::AnyRead,
+        &TaintSinkPattern::Execution,
+        false,
+    );
     assert_eq!(result, Some("any_to_execution"));
 }
 
 #[test]
 fn any_read_to_file_write() {
-    let result = find(&TaintSourcePattern::AnyRead, &TaintSinkPattern::FileWrite, false);
+    let result = find(
+        &TaintSourcePattern::AnyRead,
+        &TaintSinkPattern::FileWrite,
+        false,
+    );
     assert_eq!(result, Some("any_read_to_file_write"));
 }
 
@@ -426,9 +450,15 @@ fn curl_bash_pattern_rule_exists() {
 fn obfuscated_exfiltration_rules_exist() {
     let obfuscated: Vec<_> = TAINT_RULES
         .iter()
-        .filter(|r| r.propagator == Some(TaintPropPattern::Encoding) && r.sink == TaintSinkPattern::NetworkSend)
+        .filter(|r| {
+            r.propagator == Some(TaintPropPattern::Encoding)
+                && r.sink == TaintSinkPattern::NetworkSend
+        })
         .collect();
-    assert!(obfuscated.len() >= 3, "expected at least 3 encoding+network rules");
+    assert!(
+        obfuscated.len() >= 3,
+        "expected at least 3 encoding+network rules"
+    );
 }
 
 #[test]

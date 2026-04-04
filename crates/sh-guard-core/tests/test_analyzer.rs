@@ -90,7 +90,8 @@ fn rm_rf_root_has_force_flag() {
     let results = analyze_bash("rm -rf /");
     let a = first(&results);
     assert!(
-        has_risk_factor(a, RiskFactor::ForceFlag) || has_risk_factor(a, RiskFactor::RecursiveDelete),
+        has_risk_factor(a, RiskFactor::ForceFlag)
+            || has_risk_factor(a, RiskFactor::RecursiveDelete),
         "expected ForceFlag or RecursiveDelete, got {:?}",
         a.risk_factors
     );
@@ -199,7 +200,10 @@ fn cat_etc_passwd_intent_read() {
 fn cat_etc_passwd_system_scope() {
     let results = analyze_bash("cat /etc/passwd");
     let a = first(&results);
-    let target = a.targets.iter().find(|t| t.path.as_deref() == Some("/etc/passwd"));
+    let target = a
+        .targets
+        .iter()
+        .find(|t| t.path.as_deref() == Some("/etc/passwd"));
     assert!(target.is_some());
     assert_eq!(target.unwrap().scope, TargetScope::System);
 }
@@ -208,7 +212,10 @@ fn cat_etc_passwd_system_scope() {
 fn cat_etc_passwd_system_sensitivity() {
     let results = analyze_bash("cat /etc/passwd");
     let a = first(&results);
-    let target = a.targets.iter().find(|t| t.path.as_deref() == Some("/etc/passwd"));
+    let target = a
+        .targets
+        .iter()
+        .find(|t| t.path.as_deref() == Some("/etc/passwd"));
     assert!(target.is_some());
     assert_eq!(target.unwrap().sensitivity, Sensitivity::System);
 }
@@ -352,7 +359,9 @@ fn redirect_to_file_captured_as_target() {
     let a = first(&results);
     let paths: Vec<_> = target_paths(a);
     assert!(
-        paths.iter().any(|p| p.as_deref() == Some("/tmp/output.txt")),
+        paths
+            .iter()
+            .any(|p| p.as_deref() == Some("/tmp/output.txt")),
         "expected /tmp/output.txt in targets, got {:?}",
         paths
     );
@@ -362,7 +371,10 @@ fn redirect_to_file_captured_as_target() {
 fn redirect_to_etc_file_system_scope() {
     let results = analyze_bash("echo bad > /etc/hosts");
     let a = first(&results);
-    let target = a.targets.iter().find(|t| t.path.as_deref() == Some("/etc/hosts"));
+    let target = a
+        .targets
+        .iter()
+        .find(|t| t.path.as_deref() == Some("/etc/hosts"));
     assert!(target.is_some());
     assert_eq!(target.unwrap().scope, TargetScope::System);
 }
@@ -384,9 +396,10 @@ fn target_env_file_is_secrets() {
 fn target_ssh_key_is_secrets() {
     let results = analyze_bash("cat .ssh/id_rsa");
     let a = first(&results);
-    let target = a.targets.iter().find(|t| {
-        t.path.as_deref() == Some(".ssh/id_rsa")
-    });
+    let target = a
+        .targets
+        .iter()
+        .find(|t| t.path.as_deref() == Some(".ssh/id_rsa"));
     assert!(target.is_some());
     assert_eq!(target.unwrap().sensitivity, Sensitivity::Secrets);
 }
@@ -399,7 +412,10 @@ fn target_ssh_key_is_secrets() {
 fn score_starts_at_zero() {
     let results = analyze_bash("rm -rf /");
     let a = first(&results);
-    assert_eq!(a.score, 0, "analyzer should not set score; scorer does that");
+    assert_eq!(
+        a.score, 0,
+        "analyzer should not set score; scorer does that"
+    );
 }
 
 // ========================================================
@@ -429,11 +445,10 @@ fn context_protected_path_sensitivity() {
     };
     let results = analyze_with_ctx("cat ./secret.db", &ctx);
     let a = first(&results);
-    let target = a.targets.iter().find(|t| {
-        t.path
-            .as_deref()
-            .map_or(false, |p| p.contains("secret.db"))
-    });
+    let target = a
+        .targets
+        .iter()
+        .find(|t| t.path.as_deref().map_or(false, |p| p.contains("secret.db")));
     assert!(target.is_some());
     assert_eq!(target.unwrap().sensitivity, Sensitivity::Protected);
 }
@@ -449,7 +464,9 @@ fn pipe_to_bash_detected() {
     // (since the raw text includes "| bash")
     // Actually, the parser splits on pipe, so each segment only sees its own raw text.
     // Let's check the second segment (bash) instead.
-    let bash_seg = results.iter().find(|r| r.executable.as_deref() == Some("bash"));
+    let bash_seg = results
+        .iter()
+        .find(|r| r.executable.as_deref() == Some("bash"));
     assert!(bash_seg.is_some(), "should find bash segment");
     assert!(has_intent(bash_seg.unwrap(), Intent::Execute));
 }

@@ -57,8 +57,8 @@ fn run_corpus(filename: &str, shell: Shell) {
         }
     };
 
-    let content = fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("Failed to read {}: {}", path, e));
+    let content =
+        fs::read_to_string(&path).unwrap_or_else(|e| panic!("Failed to read {}: {}", path, e));
 
     let ctx = if shell == Shell::Zsh {
         Some(ClassifyContext {

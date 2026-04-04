@@ -303,10 +303,7 @@ fn delete_rm() {
     assert!(!r.dangerous_flags.is_empty());
 
     // Must have -rf flag rule
-    let has_rf = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"-rf"));
+    let has_rf = r.dangerous_flags.iter().any(|f| f.flags.contains(&"-rf"));
     assert!(has_rf, "rm must have -rf dangerous flag");
 
     // Must have --no-preserve-root flag rule
@@ -402,17 +399,11 @@ fn network_curl() {
     assert!(has_post, "curl must have POST-related flag");
 
     // Must have -d flag
-    let has_data = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"-d"));
+    let has_data = r.dangerous_flags.iter().any(|f| f.flags.contains(&"-d"));
     assert!(has_data, "curl must have -d flag");
 
     // Must have -T (upload) flag
-    let has_upload = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"-T"));
+    let has_upload = r.dangerous_flags.iter().any(|f| f.flags.contains(&"-T"));
     assert!(has_upload, "curl must have -T flag");
 }
 
@@ -435,16 +426,10 @@ fn network_ssh() {
     assert_eq!(r.intent, Intent::Network);
     assert!(!r.dangerous_flags.is_empty());
 
-    let has_reverse_tunnel = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"-R"));
+    let has_reverse_tunnel = r.dangerous_flags.iter().any(|f| f.flags.contains(&"-R"));
     assert!(has_reverse_tunnel, "ssh must have -R flag");
 
-    let has_forward_tunnel = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"-L"));
+    let has_forward_tunnel = r.dangerous_flags.iter().any(|f| f.flags.contains(&"-L"));
     assert!(has_forward_tunnel, "ssh must have -L flag");
 }
 
@@ -496,7 +481,9 @@ fn privilege_sudo() {
     let r = lookup("sudo");
     assert_eq!(r.intent, Intent::Privilege);
     assert_eq!(r.base_weight, 55);
-    assert!(r.capabilities.contains(&BinaryCapability::PrivilegeEscalation));
+    assert!(r
+        .capabilities
+        .contains(&BinaryCapability::PrivilegeEscalation));
 }
 
 #[test]
@@ -505,28 +492,16 @@ fn privilege_chmod() {
     assert_eq!(r.intent, Intent::Privilege);
     assert!(!r.dangerous_flags.is_empty());
 
-    let has_777 = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"777"));
+    let has_777 = r.dangerous_flags.iter().any(|f| f.flags.contains(&"777"));
     assert!(has_777, "chmod must have 777 flag");
 
-    let has_setuid = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"+s"));
+    let has_setuid = r.dangerous_flags.iter().any(|f| f.flags.contains(&"+s"));
     assert!(has_setuid, "chmod must have +s flag");
 
-    let has_u_setuid = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"u+s"));
+    let has_u_setuid = r.dangerous_flags.iter().any(|f| f.flags.contains(&"u+s"));
     assert!(has_u_setuid, "chmod must have u+s flag");
 
-    let has_g_setgid = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"g+s"));
+    let has_g_setgid = r.dangerous_flags.iter().any(|f| f.flags.contains(&"g+s"));
     assert!(has_g_setgid, "chmod must have g+s flag");
 }
 
@@ -560,16 +535,10 @@ fn package_npm() {
         .any(|f| f.flags.contains(&"publish"));
     assert!(has_publish, "npm must have publish flag");
 
-    let has_run = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"run"));
+    let has_run = r.dangerous_flags.iter().any(|f| f.flags.contains(&"run"));
     assert!(has_run, "npm must have run flag");
 
-    let has_exec = r
-        .dangerous_flags
-        .iter()
-        .any(|f| f.flags.contains(&"exec"));
+    let has_exec = r.dangerous_flags.iter().any(|f| f.flags.contains(&"exec"));
     assert!(has_exec, "npm must have exec flag");
 }
 
@@ -606,54 +575,60 @@ fn git_mutation() {
 #[test]
 fn git_force_push() {
     let r = lookup("git");
-    let has_force_push = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"push") && f.flags.contains(&"--force")
-    });
+    let has_force_push = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"push") && f.flags.contains(&"--force"));
     assert!(has_force_push, "git must have push --force flag");
 }
 
 #[test]
 fn git_force_push_short() {
     let r = lookup("git");
-    let has_force_push_short = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"push") && f.flags.contains(&"-f")
-    });
+    let has_force_push_short = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"push") && f.flags.contains(&"-f"));
     assert!(has_force_push_short, "git must have push -f flag");
 }
 
 #[test]
 fn git_force_with_lease() {
     let r = lookup("git");
-    let found = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"push") && f.flags.contains(&"--force-with-lease")
-    });
+    let found = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"push") && f.flags.contains(&"--force-with-lease"));
     assert!(found, "git must have push --force-with-lease flag");
 }
 
 #[test]
 fn git_reset_hard() {
     let r = lookup("git");
-    let found = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"reset") && f.flags.contains(&"--hard")
-    });
+    let found = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"reset") && f.flags.contains(&"--hard"));
     assert!(found, "git must have reset --hard flag");
 }
 
 #[test]
 fn git_clean_fd() {
     let r = lookup("git");
-    let found = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"clean") && f.flags.contains(&"-fd")
-    });
+    let found = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"clean") && f.flags.contains(&"-fd"));
     assert!(found, "git must have clean -fd flag");
 }
 
 #[test]
 fn git_clean_fxd() {
     let r = lookup("git");
-    let found = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"clean") && f.flags.contains(&"-fxd")
-    });
+    let found = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"clean") && f.flags.contains(&"-fxd"));
     assert!(found, "git must have clean -fxd flag");
 }
 
@@ -669,9 +644,10 @@ fn git_checkout_discard() {
 #[test]
 fn git_branch_force_delete() {
     let r = lookup("git");
-    let found = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"branch") && f.flags.contains(&"-D")
-    });
+    let found = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"branch") && f.flags.contains(&"-D"));
     assert!(found, "git must have branch -D flag");
 }
 
@@ -707,9 +683,10 @@ fn docker_privileged() {
     let r = lookup("docker");
     assert_eq!(r.intent, Intent::Execute);
     assert!(!r.dangerous_flags.is_empty());
-    let has_priv = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"--privileged")
-    });
+    let has_priv = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"--privileged"));
     assert!(has_priv, "docker must have --privileged flag");
 }
 
@@ -717,13 +694,12 @@ fn docker_privileged() {
 fn kubectl_delete() {
     let r = lookup("kubectl");
     assert_eq!(r.intent, Intent::Execute);
-    let has_delete = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"delete")
-    });
+    let has_delete = r
+        .dangerous_flags
+        .iter()
+        .any(|f| f.flags.contains(&"delete"));
     assert!(has_delete, "kubectl must have delete flag");
-    let has_exec = r.dangerous_flags.iter().any(|f| {
-        f.flags.contains(&"exec")
-    });
+    let has_exec = r.dangerous_flags.iter().any(|f| f.flags.contains(&"exec"));
     assert!(has_exec, "kubectl must have exec flag");
 }
 
@@ -756,8 +732,8 @@ fn every_command_is_lookupable() {
 #[test]
 fn commands_with_flags_are_correct() {
     let expected_flagged = &[
-        "rm", "curl", "wget", "git", "chmod", "find", "ssh", "npm",
-        "docker", "kubectl", "tar", "sed",
+        "rm", "curl", "wget", "git", "chmod", "find", "ssh", "npm", "docker", "kubectl", "tar",
+        "sed",
     ];
     for &name in expected_flagged {
         let r = lookup(name);
@@ -834,8 +810,18 @@ fn all_flag_arrays_non_empty() {
 #[test]
 fn additional_commands_exist() {
     let expected = &[
-        "xargs", "dd", "crontab", "sort", "ps", "top", "lsof",
-        "netstat", "mount", "systemctl", "iptables", "openssl",
+        "xargs",
+        "dd",
+        "crontab",
+        "sort",
+        "ps",
+        "top",
+        "lsof",
+        "netstat",
+        "mount",
+        "systemctl",
+        "iptables",
+        "openssl",
     ];
     for &name in expected {
         assert!(

@@ -52,8 +52,18 @@ fn intent_x_scope_permutations() {
 #[test]
 fn intent_x_sensitivity_permutations() {
     let intent_commands: &[&str] = &[
-        "echo", "grep", "cat", "tee", "rm", "bash",
-        "curl", "kill", "sudo", "npm install", "git push", "export",
+        "echo",
+        "grep",
+        "cat",
+        "tee",
+        "rm",
+        "bash",
+        "curl",
+        "kill",
+        "sudo",
+        "npm install",
+        "git push",
+        "export",
     ];
 
     let sensitivity_paths: &[(&str, &str)] = &[
@@ -92,7 +102,10 @@ fn intent_x_reversibility_ordering() {
         assert!(
             r_score <= i_score,
             "'{}' ({}) should score <= '{}' ({})",
-            reversible, r_score, irreversible, i_score
+            reversible,
+            r_score,
+            irreversible,
+            i_score
         );
     }
 }
@@ -157,7 +170,12 @@ fn context_field_combinations() {
 
     for ctx in &contexts {
         let result = classify(cmd, ctx.as_ref());
-        assert!(result.score <= 100, "Context {:?} produced score {}", ctx, result.score);
+        assert!(
+            result.score <= 100,
+            "Context {:?} produced score {}",
+            ctx,
+            result.score
+        );
     }
 }
 
@@ -250,7 +268,11 @@ fn all_intents_produce_valid_scores() {
     for cmd in commands {
         let result = classify(cmd, None);
         assert!(result.score <= 100, "cmd='{}' score out of range", cmd);
-        assert!(!result.sub_commands.is_empty(), "cmd='{}' has no sub_commands", cmd);
+        assert!(
+            !result.sub_commands.is_empty(),
+            "cmd='{}' has no sub_commands",
+            cmd
+        );
     }
 }
 
@@ -272,12 +294,7 @@ fn sensitivity_monotonicity_for_read() {
     let config = classify("cat .gitconfig", None).score;
     let secrets = classify("cat .env", None).score;
 
-    assert!(
-        normal <= config,
-        "normal({}) <= config({})",
-        normal,
-        config
-    );
+    assert!(normal <= config, "normal({}) <= config({})", normal, config);
     assert!(
         config <= secrets,
         "config({}) <= secrets({})",

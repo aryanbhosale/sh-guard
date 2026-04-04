@@ -63,12 +63,7 @@ fn bench_batch_10(c: &mut Criterion) {
 
 fn bench_long_pipeline(c: &mut Criterion) {
     c.bench_function("classify_pipeline_10_stage", |b| {
-        b.iter(|| {
-            classify(
-                black_box("a | b | c | d | e | f | g | h | i | j"),
-                None,
-            )
-        })
+        b.iter(|| classify(black_box("a | b | c | d | e | f | g | h | i | j"), None))
     });
 }
 

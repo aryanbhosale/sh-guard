@@ -124,9 +124,7 @@ fn mcp_unknown_tool_returns_error() {
 
 #[test]
 fn mcp_unknown_method_returns_error() {
-    let output = send_messages(&[
-        r#"{"jsonrpc":"2.0","id":1,"method":"nonexistent","params":{}}"#,
-    ]);
+    let output = send_messages(&[r#"{"jsonrpc":"2.0","id":1,"method":"nonexistent","params":{}}"#]);
     let lines: Vec<&str> = output.lines().collect();
     let response: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
     assert!(response.get("error").is_some());
