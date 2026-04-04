@@ -3,7 +3,7 @@ name = "sh-guard-core"
 version = "0.1.0"
 edition = "2021"
 description = "Semantic shell command safety classifier"
-license = "MIT"
+license = "GPL-3.0-only"
 repository = "https://github.com/aryanbhosale/sh-guard"
 
 [dependencies]

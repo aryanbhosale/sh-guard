@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "sh-guard"
 version = "0.1.0"
 description = "Semantic shell command safety classifier"
-license = { text = "MIT" }
+license = { text = "GPL-3.0-only" }
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",

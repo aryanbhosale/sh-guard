@@ -2,7 +2,7 @@
   "name": "sh-guard-cli-darwin-arm64",
   "version": "0.1.0",
   "description": "sh-guard binary for darwin-arm64",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "os": ["darwin"],
   "cpu": ["arm64"],
   "repository": {

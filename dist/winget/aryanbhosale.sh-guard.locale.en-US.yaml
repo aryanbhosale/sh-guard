@@ -8,7 +8,7 @@ PublisherUrl: https://github.com/aryanbhosale
 PublisherSupportUrl: https://github.com/aryanbhosale/sh-guard/issues
 PackageName: sh-guard
 PackageUrl: https://github.com/aryanbhosale/sh-guard
-License: MIT
+License: GPL-3.0-only
 LicenseUrl: https://github.com/aryanbhosale/sh-guard/blob/main/LICENSE
 ShortDescription: Semantic shell command safety classifier for AI coding agents
 Tags:

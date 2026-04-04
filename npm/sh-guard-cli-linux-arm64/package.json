@@ -2,7 +2,7 @@
   "name": "sh-guard-cli-linux-arm64",
   "version": "0.1.0",
   "description": "sh-guard binary for linux-arm64",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "os": ["linux"],
   "cpu": ["arm64"],
   "repository": {

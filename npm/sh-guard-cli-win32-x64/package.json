@@ -2,7 +2,7 @@
   "name": "sh-guard-cli-win32-x64",
   "version": "0.1.0",
   "description": "sh-guard binary for win32-x64",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "os": ["win32"],
   "cpu": ["x64"],
   "repository": {
