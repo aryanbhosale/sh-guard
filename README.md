@@ -63,6 +63,15 @@ cargo install --path crates/sh-guard-cli
 
 ## Quick Start
 
+### Auto-configure all AI agents
+```bash
+sh-guard --setup
+```
+
+This detects and configures **Claude Code**, **Codex CLI**, **Cursor**, **Cline**, and **Windsurf** in one command. It adds PreToolUse hooks (Claude Code, Codex) and MCP servers (Cursor, Cline, Windsurf) so every agent checks commands through sh-guard before execution.
+
+To remove: `sh-guard --uninstall`
+
 ### CLI
 ```bash
 # Analyze a command

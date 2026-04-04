@@ -1,3 +1,5 @@
+mod setup;
+
 use std::io::{self, BufRead};
 use std::process;
 
@@ -60,6 +62,14 @@ struct Cli {
     /// Use exit codes based on risk level (for hook integration)
     #[arg(long, alias = "exit-code")]
     exit_code: bool,
+
+    /// Auto-configure all detected AI agents (Claude Code, Codex, Cursor, etc.)
+    #[arg(long)]
+    setup: bool,
+
+    /// Remove sh-guard from all AI agent configs
+    #[arg(long)]
+    uninstall: bool,
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +208,16 @@ fn analyse_one(command: &str, context: Option<&ClassifyContext>, cli: &Cli) -> i
 
 fn main() {
     let cli = Cli::parse();
+
+    if cli.setup {
+        setup::run_setup();
+        return;
+    }
+
+    if cli.uninstall {
+        setup::run_uninstall();
+        return;
+    }
 
     // Validate: need either a positional command or --stdin
     if cli.command.is_none() && !cli.stdin {

@@ -30,6 +30,16 @@ class ShGuard < Formula
     bin.install "sh-guard-mcp" if File.exist?("sh-guard-mcp")
   end
 
+  def caveats
+    <<~EOS
+      To auto-configure all your AI coding agents (Claude Code, Codex, Cursor, etc.):
+        sh-guard --setup
+
+      To remove sh-guard from all agents:
+        sh-guard --uninstall
+    EOS
+  end
+
   test do
     assert_match "SAFE", shell_output("#{bin}/sh-guard 'ls -la'")
   end

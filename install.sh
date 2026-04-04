@@ -43,7 +43,12 @@ else
 fi
 
 cp "${TMPDIR}/sh-guard" "${INSTALL_DIR}/"
+cp "${TMPDIR}/sh-guard-mcp" "${INSTALL_DIR}/" 2>/dev/null || true
 chmod +x "${INSTALL_DIR}/sh-guard"
+chmod +x "${INSTALL_DIR}/sh-guard-mcp" 2>/dev/null || true
 rm -rf "$TMPDIR"
 
 echo "sh-guard ${VERSION} installed to ${INSTALL_DIR}/sh-guard"
+echo ""
+echo "To auto-configure all your AI coding agents:"
+echo "  sh-guard --setup"
