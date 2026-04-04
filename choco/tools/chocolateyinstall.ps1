@@ -9,5 +9,5 @@ $installDir = "$(Split-Path -Parent $MyInvocation.MyCommand.Definition)"
 Install-ChocolateyZipPackage -PackageName $packageName `
   -Url64bit $url64 `
   -UnzipLocation $installDir `
-  -Checksum64 '2d610b49a9ad7481471b2a287ed6ad3c4f7dd550ad100aa09a621174a8b3e1eb' `
+  -Checksum64 '10b10d2fc374c91bcb6c58a5299fae174ff8a82cad9264fabb9ff1cff48e71bc' `
   -ChecksumType64 'sha256'
