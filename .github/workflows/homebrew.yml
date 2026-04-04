@@ -1,0 +1,82 @@
+name: Update Homebrew Tap
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-tap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release assets and compute SHA256
+        run: |
+          mkdir -p /tmp/assets
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu; do
+            gh release download "$GITHUB_REF_NAME" \
+              --pattern "sh-guard-${target}.tar.gz" \
+              --dir /tmp/assets
+          done
+
+          SHA_DARWIN_ARM=$(sha256sum /tmp/assets/sh-guard-aarch64-apple-darwin.tar.gz | cut -d' ' -f1)
+          SHA_DARWIN_X64=$(sha256sum /tmp/assets/sh-guard-x86_64-apple-darwin.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_ARM=$(sha256sum /tmp/assets/sh-guard-aarch64-unknown-linux-gnu.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_X64=$(sha256sum /tmp/assets/sh-guard-x86_64-unknown-linux-gnu.tar.gz | cut -d' ' -f1)
+
+          cat > /tmp/sh-guard.rb << FORMULA
+          class ShGuard < Formula
+            desc "Semantic shell command safety classifier for AI coding agents"
+            homepage "https://github.com/aryanbhosale/sh-guard"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/${GITHUB_REF_NAME}/sh-guard-aarch64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_ARM}"
+              end
+              on_intel do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/${GITHUB_REF_NAME}/sh-guard-x86_64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_X64}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/${GITHUB_REF_NAME}/sh-guard-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_ARM}"
+              end
+              on_intel do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/${GITHUB_REF_NAME}/sh-guard-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_X64}"
+              end
+            end
+
+            def install
+              bin.install "sh-guard"
+              bin.install "sh-guard-mcp" if File.exist?("sh-guard-mcp")
+            end
+
+            test do
+              assert_match "SAFE", shell_output("#{bin}/sh-guard 'ls -la'")
+            end
+          end
+          FORMULA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Homebrew tap
+        run: |
+          # Use the GitHub API to update the formula in the tap repo
+          CONTENT=$(base64 -w0 /tmp/sh-guard.rb)
+          SHA=$(gh api repos/aryanbhosale/homebrew-tap/contents/Formula/sh-guard.rb --jq '.sha')
+
+          gh api repos/aryanbhosale/homebrew-tap/contents/Formula/sh-guard.rb \
+            -X PUT \
+            -f message="Update sh-guard to ${GITHUB_REF_NAME}" \
+            -f content="$CONTENT" \
+            -f sha="$SHA"
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}

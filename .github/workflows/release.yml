@@ -54,10 +54,17 @@ jobs:
           cp target/${{ matrix.target }}/release/sh-guard.exe dist/
           cp target/${{ matrix.target }}/release/sh-guard-mcp.exe dist/
           cd dist && tar czf sh-guard-${{ matrix.target }}.tar.gz sh-guard.exe sh-guard-mcp.exe
+      - name: Package zip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/sh-guard.exe, dist/sh-guard-mcp.exe -DestinationPath dist/sh-guard-${{ matrix.target }}.zip
       - uses: actions/upload-artifact@v4
         with:
           name: sh-guard-${{ matrix.target }}
-          path: dist/sh-guard-${{ matrix.target }}.tar.gz
+          path: |
+            dist/sh-guard-${{ matrix.target }}.tar.gz
+            dist/sh-guard-${{ matrix.target }}.zip
 
   release:
     name: Release
@@ -70,5 +77,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*/*.tar.gz
+          files: |
+            artifacts/*/*.tar.gz
+            artifacts/*/*.zip
           generate_release_notes: true
