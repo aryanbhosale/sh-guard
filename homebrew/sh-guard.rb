@@ -1,7 +1,7 @@
 class ShGuard < Formula
   desc "Semantic shell command safety classifier for AI coding agents"
   homepage "https://github.com/aryanbhosale/sh-guard"
-  license "MIT"
+  license "GPL-3.0-only"
 
   on_macos do
     on_arm do

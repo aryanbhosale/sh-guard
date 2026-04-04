@@ -3,7 +3,7 @@ name = "sh-guard-python"
 version = "0.1.0"
 edition = "2021"
 description = "Python binding for sh-guard via PyO3"
-license = "MIT"
+license = "GPL-3.0-only"
 
 [lib]
 name = "sh_guard"

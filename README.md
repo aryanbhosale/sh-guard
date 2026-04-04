@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/sh-guard?color=blue&label=npm)](https://www.npmjs.com/package/sh-guard)
 [![PyPI](https://img.shields.io/pypi/v/sh-guard?color=blue&label=pypi)](https://pypi.org/project/sh-guard/)
 [![CI](https://github.com/aryanbhosale/sh-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/aryanbhosale/sh-guard/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License: GPLv3](https://img.shields.io/badge/license-GPLv3-blue)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/aryanbhosale/sh-guard/pkgs/container/sh-guard)
 
 Semantic shell command safety classifier for AI coding agents. Parses commands into ASTs, analyzes data flow through pipelines, and scores risk in under 100 microseconds.
@@ -354,4 +354,4 @@ See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## License
 
-MIT
+GPL-3.0-only

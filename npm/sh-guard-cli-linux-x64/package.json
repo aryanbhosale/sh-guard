@@ -2,7 +2,7 @@
   "name": "sh-guard-cli-linux-x64",
   "version": "0.1.0",
   "description": "sh-guard binary for linux-x64",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "os": ["linux"],
   "cpu": ["x64"],
   "repository": {
