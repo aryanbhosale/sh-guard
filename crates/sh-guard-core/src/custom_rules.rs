@@ -75,8 +75,23 @@ pub struct ScoreOverride {
 impl RuleConfig {
     /// Load from a TOML file path.
     pub fn from_file(path: &Path) -> Option<Self> {
-        let content = std::fs::read_to_string(path).ok()?;
-        Self::from_toml(&content)
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("sh-guard: failed to read {}: {}", path.display(), e);
+                return None;
+            }
+        };
+        match Self::from_toml(&content) {
+            Some(config) => Some(config),
+            None => {
+                eprintln!(
+                    "sh-guard: failed to parse {}: invalid TOML or rule format",
+                    path.display()
+                );
+                None
+            }
+        }
     }
 
     /// Parse from TOML string.
@@ -355,40 +370,38 @@ fn dirs() -> Option<PathBuf> {
 fn glob_match(pattern: &str, text: &str) -> bool {
     if pattern.contains('*') {
         let parts: Vec<&str> = pattern.split('*').collect();
-        if parts.len() == 2 {
-            let (prefix, suffix) = (parts[0], parts[1]);
-            text.starts_with(prefix) && text.ends_with(suffix)
-        } else {
-            text.contains(pattern.trim_matches('*'))
+        let mut remaining = text;
+        for (i, part) in parts.iter().enumerate() {
+            if part.is_empty() {
+                continue;
+            }
+            if i == 0 {
+                if !remaining.starts_with(part) {
+                    return false;
+                }
+                remaining = &remaining[part.len()..];
+            } else if i == parts.len() - 1 {
+                if !remaining.ends_with(part) {
+                    return false;
+                }
+                return true;
+            } else {
+                match remaining.find(part) {
+                    Some(pos) => remaining = &remaining[pos + part.len()..],
+                    None => return false,
+                }
+            }
         }
+        true
     } else {
         text == pattern
     }
 }
 
 fn regex_match(pattern: &str, text: &str) -> bool {
-    // Lightweight regex support for common patterns without pulling in the regex crate.
-    // Supports: literal substrings, .* (any), ^ (start), $ (end)
-    let pattern = pattern.trim_start_matches('^').trim_end_matches('$');
-
-    if pattern.contains(".*") {
-        // Split on .* and check all parts appear in order
-        let parts: Vec<&str> = pattern.split(".*").collect();
-        let mut remaining = text;
-        for part in &parts {
-            if part.is_empty() {
-                continue;
-            }
-            if let Some(pos) = remaining.find(part) {
-                remaining = &remaining[pos + part.len()..];
-            } else {
-                return false;
-            }
-        }
-        true
-    } else {
-        text.contains(pattern)
-    }
+    regex::Regex::new(pattern)
+        .map(|re| re.is_match(text))
+        .unwrap_or(false)
 }
 
 #[cfg(test)]

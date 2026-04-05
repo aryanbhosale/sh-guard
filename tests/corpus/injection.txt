@@ -17,7 +17,7 @@ eval 'echo hello' | danger | 51-80
 export LD_PRELOAD=/tmp/evil.so | danger | 51-80
 export PATH=/tmp/evil:$PATH | danger | 51-80
 export FOO=bar | danger | 51-80
-source .bashrc | danger | 51-80
+source .bashrc | critical | 81-100
 . .bashrc | danger | 51-80
 FOO=$(cat /etc/passwd) | danger | 51-80
 VAR=hello; echo $VAR | danger | 51-80

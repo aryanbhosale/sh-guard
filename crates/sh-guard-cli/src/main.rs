@@ -59,9 +59,10 @@ struct Cli {
     #[arg(long, short)]
     quiet: bool,
 
-    /// Use exit codes based on risk level (for hook integration)
-    #[arg(long, alias = "exit-code")]
-    exit_code: bool,
+    /// Exit codes are always active: 0=safe, 1=caution, 2=danger, 3=critical.
+    /// This flag is accepted for backwards compatibility but has no effect.
+    #[arg(long, alias = "exit-code", hide = true)]
+    _exit_code: bool,
 
     /// Auto-configure all detected AI agents (Claude Code, Codex, Cursor, etc.)
     #[arg(long)]
@@ -217,7 +218,10 @@ fn main() {
     let cli = Cli::parse();
 
     if cli.setup {
-        setup::run_setup();
+        if let Err(e) = setup::run_setup() {
+            eprintln!("Setup failed: {}", e);
+            process::exit(1);
+        }
         return;
     }
 

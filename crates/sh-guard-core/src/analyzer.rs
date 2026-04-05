@@ -68,7 +68,14 @@ fn analyze_segment(
     // 7. Collect risk factors from flags, injection patterns, zsh rules
     let mut risk_factors: Vec<RiskFactor> = flags.iter().map(|f| f.risk_factor).collect();
 
-    // Check injection patterns on the raw command text
+    // Check injection patterns on the raw command text.
+    // NOTE: We pass `raw` as both `unquoted` and `raw` because we do not yet
+    // have a quote-stripping function.  This means patterns that inspect
+    // `unquoted` may trigger on text that is actually inside quotes (false
+    // positives).  This is the safer direction — false positives rather than
+    // false negatives — so a properly quoted string may still be flagged.
+    // TODO: Implement a quote-stripping pass and pass the truly unquoted text
+    // as the first argument.
     let injections = injection::detect_injections(&segment.raw, &segment.raw);
     for (_, _, rf, _) in &injections {
         if !risk_factors.contains(rf) {

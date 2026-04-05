@@ -4,7 +4,7 @@ Thanks for your interest in contributing! Here's everything you need to get star
 
 ## Development setup
 
-1. Install [Rust](https://rustup.rs/) (1.80+)
+1. Install [Rust](https://rustup.rs/) (stable)
 2. Clone the repo:
    ```bash
    git clone https://github.com/aryanbhosale/sh-guard.git

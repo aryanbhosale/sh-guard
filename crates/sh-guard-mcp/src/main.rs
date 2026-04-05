@@ -109,18 +109,24 @@ fn main() {
                 let tool_name = params.get("name").and_then(|n| n.as_str()).unwrap_or("");
                 let arguments = params.get("arguments").cloned().unwrap_or(json!({}));
 
-                let result = match tool_name {
-                    "sh_guard_classify" => handle_classify(&arguments),
-                    "sh_guard_batch" => handle_batch(&arguments),
-                    _ => json!({
-                        "content": [{
-                            "type": "text",
-                            "text": format!("Unknown tool: {}", tool_name)
-                        }],
-                        "isError": true
-                    }),
-                };
-                Some(json_rpc_response(id, result))
+                match tool_name {
+                    "sh_guard_classify" => {
+                        let result = handle_classify(&arguments);
+                        Some(json_rpc_response(id, result))
+                    }
+                    "sh_guard_batch" => {
+                        let result = handle_batch(&arguments);
+                        Some(json_rpc_response(id, result))
+                    }
+                    _ => Some(json!({
+                        "jsonrpc": "2.0",
+                        "id": id,
+                        "error": {
+                            "code": -32602,
+                            "message": format!("Unknown tool: {}", tool_name)
+                        }
+                    })),
+                }
             }
             _ => {
                 // Unknown method -- return error if it has an id (request), ignore if notification
@@ -140,9 +146,12 @@ fn main() {
         };
 
         if let Some(resp) = response {
-            let resp_str = serde_json::to_string(&resp).unwrap();
-            writeln!(stdout, "{}", resp_str).unwrap();
-            stdout.flush().unwrap();
+            let Ok(resp_str) = serde_json::to_string(&resp) else {
+                continue;
+            };
+            if writeln!(stdout, "{}", resp_str).is_err() || stdout.flush().is_err() {
+                break;
+            }
         }
     }
 }

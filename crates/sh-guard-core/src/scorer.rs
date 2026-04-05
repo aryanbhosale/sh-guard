@@ -148,10 +148,13 @@ pub fn generate_reason(analysis: &CommandAnalysis) -> String {
         parts.push(desc.to_string());
     }
 
-    if parts.len() == 1 {
-        parts[0].clone()
+    if let Some((first, rest)) = parts.split_first() {
+        if rest.is_empty() {
+            first.clone()
+        } else {
+            format!("{}: {}", first, rest.join(", "))
+        }
     } else {
-        let (first, rest) = parts.split_first().unwrap();
-        format!("{}: {}", first, rest.join(", "))
+        "Unknown operation".to_string()
     }
 }

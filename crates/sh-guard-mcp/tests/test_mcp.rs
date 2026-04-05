@@ -118,8 +118,10 @@ fn mcp_unknown_tool_returns_error() {
     ]);
     let lines: Vec<&str> = output.lines().collect();
     let response: serde_json::Value = serde_json::from_str(lines[1]).unwrap();
-    let content_text = response["result"]["content"][0]["text"].as_str().unwrap();
-    assert!(content_text.contains("Unknown tool"));
+    // Unknown tools now return a proper JSON-RPC error
+    assert!(response.get("error").is_some());
+    let error_msg = response["error"]["message"].as_str().unwrap();
+    assert!(error_msg.contains("Unknown tool"));
 }
 
 #[test]

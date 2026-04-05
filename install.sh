@@ -31,7 +31,14 @@ URL="https://github.com/${REPO}/releases/download/${VERSION}/sh-guard-${TARGET}.
 echo "Downloading sh-guard ${VERSION} for ${TARGET}..."
 
 TMPDIR=$(mktemp -d)
-curl -sL "$URL" -o "${TMPDIR}/sh-guard.tar.gz"
+curl -fsSL "$URL" -o "${TMPDIR}/sh-guard.tar.gz"
+
+if [ ! -s "${TMPDIR}/sh-guard.tar.gz" ]; then
+    echo "Error: downloaded file is empty. Check the release URL: $URL"
+    rm -rf "$TMPDIR"
+    exit 1
+fi
+
 tar xzf "${TMPDIR}/sh-guard.tar.gz" -C "${TMPDIR}"
 
 # Install to /usr/local/bin or ~/.local/bin
@@ -49,6 +56,20 @@ chmod +x "${INSTALL_DIR}/sh-guard-mcp" 2>/dev/null || true
 rm -rf "$TMPDIR"
 
 echo "sh-guard ${VERSION} installed to ${INSTALL_DIR}/sh-guard"
+
+if [ "$INSTALL_DIR" = "${HOME}/.local/bin" ]; then
+    case ":$PATH:" in
+        *":${HOME}/.local/bin:"*) ;;
+        *)
+            echo ""
+            echo "WARNING: ${HOME}/.local/bin is not in your PATH."
+            echo "Add it by running:"
+            echo "  export PATH=\"\${HOME}/.local/bin:\${PATH}\""
+            echo "Or add that line to your shell profile (~/.bashrc, ~/.zshrc, etc.)"
+            ;;
+    esac
+fi
+
 echo ""
 echo "To auto-configure all your AI coding agents:"
 echo "  sh-guard --setup"

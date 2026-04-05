@@ -108,6 +108,10 @@ const AGENTS: &[Agent] = &[
 
 const HOOK_SCRIPT: &str = r#"#!/bin/sh
 # sh-guard PreToolUse hook — blocks dangerous commands before execution
+if ! command -v jq >/dev/null 2>&1; then
+  echo "sh-guard: jq not found — blocking command (fail-closed)" >&2
+  exit 1
+fi
 COMMAND=$(cat | jq -r '.tool_input.command // empty' 2>/dev/null)
 [ -z "$COMMAND" ] && exit 0
 RESULT=$(sh-guard --json --exit-code "$COMMAND" 2>&1)
@@ -164,8 +168,19 @@ fn write_json(path: &Path, value: &Value) -> Result<(), String> {
     }
     let contents =
         serde_json::to_string_pretty(value).map_err(|e| format!("Failed to serialize: {}", e))?;
-    fs::write(path, contents.as_bytes())
-        .map_err(|e| format!("Failed to write {}: {}", path.display(), e))
+    // Atomic write: write to a temp file first, then rename into place.
+    // This prevents partial writes from corrupting the config file.
+    let tmp = path.with_extension("tmp");
+    fs::write(&tmp, contents.as_bytes())
+        .map_err(|e| format!("Failed to write {}: {}", tmp.display(), e))?;
+    fs::rename(&tmp, path).map_err(|e| {
+        format!(
+            "Failed to rename {} -> {}: {}",
+            tmp.display(),
+            path.display(),
+            e
+        )
+    })
 }
 
 fn setup_claude_code(config_path: &Path, hook_path: &Path) -> Result<bool, String> {
@@ -188,26 +203,32 @@ fn setup_claude_code(config_path: &Path, hook_path: &Path) -> Result<bool, Strin
         }
     }
 
+    let hook_cmd = hook_path
+        .to_str()
+        .ok_or_else(|| format!("Hook path contains invalid UTF-8: {}", hook_path.display()))?;
+
     let hook_entry = json!({
         "matcher": "Bash",
         "hooks": [{
             "type": "command",
-            "command": hook_path.to_string_lossy(),
+            "command": hook_cmd,
             "timeout": 1000
         }]
     });
 
     let hooks = config
         .as_object_mut()
-        .unwrap()
+        .ok_or("Config is not a JSON object")?
         .entry("hooks")
         .or_insert_with(|| json!({}));
     let pre = hooks
         .as_object_mut()
-        .unwrap()
+        .ok_or("hooks is not a JSON object")?
         .entry("PreToolUse")
         .or_insert_with(|| json!([]));
-    pre.as_array_mut().unwrap().push(hook_entry);
+    pre.as_array_mut()
+        .ok_or("PreToolUse is not a JSON array")?
+        .push(hook_entry);
 
     write_json(config_path, &config)?;
     Ok(true)
@@ -233,26 +254,32 @@ fn setup_codex(config_path: &Path, hook_path: &Path) -> Result<bool, String> {
         }
     }
 
+    let hook_cmd = hook_path
+        .to_str()
+        .ok_or_else(|| format!("Hook path contains invalid UTF-8: {}", hook_path.display()))?;
+
     let hook_entry = json!({
         "matcher": "Bash",
         "hooks": [{
             "type": "command",
-            "command": hook_path.to_string_lossy(),
+            "command": hook_cmd,
             "timeout": 30
         }]
     });
 
     let hooks = config
         .as_object_mut()
-        .unwrap()
+        .ok_or("Config is not a JSON object")?
         .entry("hooks")
         .or_insert_with(|| json!({}));
     let pre = hooks
         .as_object_mut()
-        .unwrap()
+        .ok_or("hooks is not a JSON object")?
         .entry("PreToolUse")
         .or_insert_with(|| json!([]));
-    pre.as_array_mut().unwrap().push(hook_entry);
+    pre.as_array_mut()
+        .ok_or("PreToolUse is not a JSON array")?
+        .push(hook_entry);
 
     write_json(config_path, &config)?;
     Ok(true)
@@ -274,12 +301,12 @@ fn setup_mcp(config_path: &Path) -> Result<bool, String> {
 
     let servers = config
         .as_object_mut()
-        .unwrap()
+        .ok_or("Config is not a JSON object")?
         .entry("mcpServers")
         .or_insert_with(|| json!({}));
     servers
         .as_object_mut()
-        .unwrap()
+        .ok_or("mcpServers is not a JSON object")?
         .insert("sh-guard".to_string(), mcp_entry);
 
     write_json(config_path, &config)?;
@@ -290,7 +317,7 @@ fn setup_mcp(config_path: &Path) -> Result<bool, String> {
 // Public API
 // ---------------------------------------------------------------------------
 
-pub fn run_setup() {
+pub fn run_setup() -> Result<(), String> {
     println!("sh-guard setup — configuring AI coding agents\n");
 
     // Check that sh-guard and sh-guard-mcp are on PATH
@@ -315,8 +342,7 @@ pub fn run_setup() {
             p
         }
         Err(e) => {
-            eprintln!("  Error creating hook script: {}", e);
-            return;
+            return Err(format!("Error creating hook script: {}", e));
         }
     };
 
@@ -325,6 +351,7 @@ pub fn run_setup() {
     let mut configured = 0u32;
     let mut skipped = 0u32;
     let mut not_found = 0u32;
+    let mut errors = 0u32;
 
     for agent in AGENTS {
         let config_path = match (agent.config_path)() {
@@ -382,7 +409,8 @@ pub fn run_setup() {
                 skipped += 1;
             }
             Err(e) => {
-                println!("  {} — error: {}", agent.name, e);
+                eprintln!("  {} — error: {}", agent.name, e);
+                errors += 1;
             }
         }
     }
@@ -395,6 +423,12 @@ pub fn run_setup() {
 
     if configured > 0 {
         println!("\nRestart your AI agents for changes to take effect.");
+    }
+
+    if errors > 0 {
+        Err(format!("{} agent(s) failed to configure", errors))
+    } else {
+        Ok(())
     }
 }
 
@@ -477,9 +511,24 @@ fn remove_mcp(config_path: &Path) -> Result<bool, String> {
 }
 
 fn which_exists(name: &str) -> bool {
-    std::process::Command::new("which")
-        .arg(name)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
+    // Use "command -v" via sh, which is portable across Unix and works on
+    // Windows when sh is available. Falls back to trying to run the command
+    // directly with --version if sh is not available (e.g., pure Windows).
+    std::process::Command::new("sh")
+        .arg("-c")
+        .arg(format!("command -v {}", name))
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or_else(|_| {
+            // sh not available (Windows without sh); try running the command directly
+            std::process::Command::new(name)
+                .arg("--version")
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+                .map(|s| s.success())
+                .unwrap_or(false)
+        })
 }
