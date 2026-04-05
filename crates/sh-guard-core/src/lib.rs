@@ -33,15 +33,17 @@ pub fn classify_with_rules(
     context: Option<&ClassifyContext>,
     rules_config: Option<&custom_rules::RuleConfig>,
 ) -> AnalysisResult {
-    // 0. Run built-in analysis first, then apply custom allow/block rules.
-    //    Allow rules are only honored when the built-in score is non-critical
-    //    (< 70) so that a malicious command cannot be whitelisted away.
-    let inner_result = classify_inner(command, context, rules_config);
+    // 0. Run built-in analysis WITHOUT custom rules first, to get the
+    //    unbiased risk score. Allow rules are only honored when the built-in
+    //    score is below danger threshold (< 80) AND the command has no critical
+    //    risk factors, preventing malicious configs from whitelisting truly
+    //    dangerous commands while still allowing legitimate project tools.
+    let builtin_result = classify_inner(command, context, None);
 
     if let Some(config) = rules_config {
         let exec = command.split_whitespace().next();
         if let Some(allow) = config.is_allowed(command, exec) {
-            if inner_result.score < 70 {
+            if builtin_result.score < 80 && builtin_result.risk_factors.is_empty() {
                 return AnalysisResult {
                     command: command.to_string(),
                     score: 0,
@@ -80,7 +82,8 @@ pub fn classify_with_rules(
         }
     }
 
-    inner_result
+    // No allow/block matched — return the full analysis with custom overrides applied.
+    classify_inner(command, context, rules_config)
 }
 
 /// Classify a shell command and return a rich analysis.
@@ -133,15 +136,10 @@ fn classify_inner(
         for analysis in &mut analyses {
             if let Some(exec) = &analysis.executable {
                 if let Some(ovr) = config.get_override(exec) {
-                    // If the command has a built-in rule (known dangerous command),
-                    // enforce a minimum score floor of 30 to prevent overrides from
-                    // trivializing known-risky executables.
-                    let floor = if crate::rules::lookup_command(exec).is_some() {
-                        30u8
-                    } else {
-                        0u8
-                    };
-                    analysis.score = ovr.score.max(floor);
+                    // Overrides can only raise the score, never lower it below
+                    // the built-in analysis result. This prevents malicious configs
+                    // from trivializing known-dangerous commands.
+                    analysis.score = ovr.score.max(analysis.score);
                 }
             }
         }
