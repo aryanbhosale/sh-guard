@@ -184,8 +184,17 @@ fn build_context(cli: &Cli) -> Option<ClassifyContext> {
 }
 
 /// Analyse a single command and produce output / collect exit code.
-fn analyse_one(command: &str, context: Option<&ClassifyContext>, cli: &Cli) -> i32 {
-    let result = classify(command, context);
+fn analyse_one(
+    command: &str,
+    context: Option<&ClassifyContext>,
+    rules_config: Option<&sh_guard_core::custom_rules::RuleConfig>,
+    cli: &Cli,
+) -> i32 {
+    let result = if let Some(rules) = rules_config {
+        sh_guard_core::classify_with_rules(command, context, Some(rules))
+    } else {
+        classify(command, context)
+    };
 
     if !cli.quiet {
         if cli.json {
@@ -223,21 +232,22 @@ fn main() {
         process::exit(1);
     }
 
-    // Load user rules if specified (currently informational --
-    // the core classify() uses built-in rules; custom RuleSet support
-    // will be wired in a future release).
-    if let Some(ref rules_path) = cli.rules {
+    // Load custom rules
+    let rules_config = if let Some(ref rules_path) = cli.rules {
         let path = std::path::Path::new(rules_path);
         if !path.exists() {
             eprintln!("Warning: rules file not found: {}", rules_path);
+            None
+        } else {
+            sh_guard_core::custom_rules::RuleConfig::from_file(path)
         }
-        // RuleSet::with_user_rules is available but not yet threaded through
-        // classify(). We load it here for validation / future use.
-        let _ruleset = sh_guard_core::rules::RuleSet::with_user_rules(path);
-    }
+    } else {
+        None
+    };
 
     let context = build_context(&cli);
     let ctx_ref = context.as_ref();
+    let rules_ref = rules_config.as_ref();
 
     if cli.stdin {
         // Batch mode: read one command per line from stdin.
@@ -256,7 +266,7 @@ fn main() {
             if trimmed.is_empty() {
                 continue;
             }
-            let code = analyse_one(trimmed, ctx_ref, &cli);
+            let code = analyse_one(trimmed, ctx_ref, rules_ref, &cli);
             if code > worst_exit {
                 worst_exit = code;
             }
@@ -267,7 +277,7 @@ fn main() {
 
     // Single command mode.
     if let Some(ref command) = cli.command {
-        let code = analyse_one(command, ctx_ref, &cli);
+        let code = analyse_one(command, ctx_ref, rules_ref, &cli);
         process::exit(code);
     }
 }

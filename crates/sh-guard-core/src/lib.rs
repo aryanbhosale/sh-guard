@@ -5,6 +5,7 @@ pub use types::*;
 pub mod analyzer;
 #[doc(hidden)]
 pub mod context;
+pub mod custom_rules;
 pub(crate) mod parser;
 #[doc(hidden)]
 pub mod parser_fallback;
@@ -26,8 +27,65 @@ pub mod test_internals {
     pub use crate::scorer;
 }
 
+/// Classify a shell command with custom rules.
+pub fn classify_with_rules(
+    command: &str,
+    context: Option<&ClassifyContext>,
+    rules_config: Option<&custom_rules::RuleConfig>,
+) -> AnalysisResult {
+    // 0. Check custom allow/block rules first
+    if let Some(config) = rules_config {
+        let exec = command.split_whitespace().next();
+        if let Some(allow) = config.is_allowed(command, exec) {
+            return AnalysisResult {
+                command: command.to_string(),
+                score: 0,
+                level: RiskLevel::Safe,
+                quick_decision: QuickDecision::Safe,
+                reason: allow.reason.clone(),
+                risk_factors: vec![],
+                sub_commands: vec![],
+                pipeline_flow: None,
+                mitre_mappings: vec![],
+                parse_confidence: ParseConfidence::Full,
+            };
+        }
+        if let Some(block) = config.is_blocked(command, exec) {
+            let mitre = block.mitre.as_ref().map(|id| MitreMapping {
+                technique_id: id.clone(),
+                technique_name: get_mitre_name(id),
+                tactic: get_mitre_tactic(id),
+            });
+            return AnalysisResult {
+                command: command.to_string(),
+                score: 100,
+                level: RiskLevel::Critical,
+                quick_decision: QuickDecision::Blocked,
+                reason: block.reason.clone(),
+                risk_factors: vec![],
+                sub_commands: vec![],
+                pipeline_flow: None,
+                mitre_mappings: mitre.into_iter().collect(),
+                parse_confidence: ParseConfidence::Full,
+            };
+        }
+    }
+
+    classify_inner(command, context, rules_config)
+}
+
 /// Classify a shell command and return a rich analysis.
 pub fn classify(command: &str, context: Option<&ClassifyContext>) -> AnalysisResult {
+    // Auto-discover project rules
+    let discovered = custom_rules::RuleConfig::discover(context);
+    classify_inner(command, context, discovered.as_ref())
+}
+
+fn classify_inner(
+    command: &str,
+    context: Option<&ClassifyContext>,
+    rules_config: Option<&custom_rules::RuleConfig>,
+) -> AnalysisResult {
     let shell = context.map(|c| c.shell).unwrap_or(Shell::Bash);
 
     // 1. Parse
@@ -61,7 +119,18 @@ pub fn classify(command: &str, context: Option<&ClassifyContext>) -> AnalysisRes
         scorer::score_command(analysis, context);
     }
 
-    // 5. Pipeline analysis
+    // 5. Apply custom score overrides
+    if let Some(config) = rules_config {
+        for analysis in &mut analyses {
+            if let Some(exec) = &analysis.executable {
+                if let Some(ovr) = config.get_override(exec) {
+                    analysis.score = ovr.score;
+                }
+            }
+        }
+    }
+
+    // 6. Pipeline analysis
     let pipeline_flow = pipeline::analyze_pipeline(&analyses, &parsed.chain_operators);
 
     // 6. Compute final score
