@@ -6,6 +6,9 @@ on:
     paths:
       - 'crates/*/Cargo.toml'
 
+permissions:
+  contents: write
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
@@ -35,6 +38,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create and push tag
+        # NOTE: Tags pushed via GITHUB_TOKEN will NOT trigger other workflows
+        # (e.g., release.yml). To trigger downstream workflows, use a PAT or
+        # a GitHub App token instead of the default GITHUB_TOKEN.
         run: |
           git tag ${{ needs.check-version.outputs.version }}
           git push origin ${{ needs.check-version.outputs.version }}

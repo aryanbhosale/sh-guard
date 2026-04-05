@@ -17,6 +17,12 @@ parts:
     build-packages:
       - gcc
     rust-path: ["crates/sh-guard-cli"]
+  sh-guard-mcp:
+    plugin: rust
+    source: .
+    build-packages:
+      - gcc
+    rust-path: ["crates/sh-guard-mcp"]
 
 apps:
   sh-guard:

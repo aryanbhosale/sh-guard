@@ -157,10 +157,27 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
     },
     InjectionPattern {
         name: "eval_usage",
-        detect_fn: |unquoted, _raw| unquoted.starts_with("eval ") || unquoted.contains(" eval "),
+        detect_fn: |unquoted, _raw| {
+            unquoted.starts_with("eval ")
+                || unquoted.contains(" eval ")
+                || unquoted.starts_with("source ")
+                || unquoted.contains(" source ")
+        },
         score: 50,
         risk_factor: RiskFactor::CommandExecution,
-        description: "eval command usage",
+        description: "eval/source command usage",
+    },
+    InjectionPattern {
+        name: "dot_sourcing",
+        detect_fn: |unquoted, _raw| {
+            // Detect ". /path" (dot-sourcing) at start or in middle.
+            // Must be followed by a space and then a path starting with /
+            // to avoid false positives on relative paths like "./script".
+            unquoted.starts_with(". /") || unquoted.contains(" . /")
+        },
+        score: 50,
+        risk_factor: RiskFactor::CommandExecution,
+        description: "Dot-sourcing a script (. /path)",
     },
     InjectionPattern {
         name: "hex_escape_sequences",
@@ -207,15 +224,40 @@ pub static INJECTION_PATTERNS: &[InjectionPattern] = &[
         name: "pipe_to_shell",
         detect_fn: |_unquoted, raw| {
             let lower = raw.to_lowercase();
+            // With space after pipe
             lower.contains("| bash")
                 || lower.contains("| sh")
                 || lower.contains("| zsh")
+                || lower.contains("| fish")
+                || lower.contains("| ksh")
+                || lower.contains("| csh")
+                || lower.contains("| tcsh")
+                || lower.contains("| dash")
+                || lower.contains("| python")
+                || lower.contains("| python3")
+                || lower.contains("| perl")
+                || lower.contains("| ruby")
+                || lower.contains("| node")
+                || lower.contains("| nodejs")
+                // Without space after pipe
                 || lower.contains("|bash")
                 || lower.contains("|sh")
+                || lower.contains("|zsh")
+                || lower.contains("|fish")
+                || lower.contains("|ksh")
+                || lower.contains("|csh")
+                || lower.contains("|tcsh")
+                || lower.contains("|dash")
+                || lower.contains("|python")
+                || lower.contains("|python3")
+                || lower.contains("|perl")
+                || lower.contains("|ruby")
+                || lower.contains("|node")
+                || lower.contains("|nodejs")
         },
         score: 55,
         risk_factor: RiskFactor::PipeToExecution,
-        description: "Output piped to shell execution",
+        description: "Output piped to shell or interpreter execution",
     },
 ];
 

@@ -33,22 +33,30 @@ pub fn classify_with_rules(
     context: Option<&ClassifyContext>,
     rules_config: Option<&custom_rules::RuleConfig>,
 ) -> AnalysisResult {
-    // 0. Check custom allow/block rules first
+    // 0. Run built-in analysis first, then apply custom allow/block rules.
+    //    Allow rules are only honored when the built-in score is non-critical
+    //    (< 70) so that a malicious command cannot be whitelisted away.
+    let inner_result = classify_inner(command, context, rules_config);
+
     if let Some(config) = rules_config {
         let exec = command.split_whitespace().next();
         if let Some(allow) = config.is_allowed(command, exec) {
-            return AnalysisResult {
-                command: command.to_string(),
-                score: 0,
-                level: RiskLevel::Safe,
-                quick_decision: QuickDecision::Safe,
-                reason: allow.reason.clone(),
-                risk_factors: vec![],
-                sub_commands: vec![],
-                pipeline_flow: None,
-                mitre_mappings: vec![],
-                parse_confidence: ParseConfidence::Full,
-            };
+            if inner_result.score < 70 {
+                return AnalysisResult {
+                    command: command.to_string(),
+                    score: 0,
+                    level: RiskLevel::Safe,
+                    quick_decision: QuickDecision::Safe,
+                    reason: allow.reason.clone(),
+                    risk_factors: vec![],
+                    sub_commands: vec![],
+                    pipeline_flow: None,
+                    mitre_mappings: vec![],
+                    parse_confidence: ParseConfidence::Full,
+                };
+            }
+            // Built-in analysis detected critical risk (score >= 70);
+            // ignore the allow rule and fall through to the built-in result.
         }
         if let Some(block) = config.is_blocked(command, exec) {
             let mitre = block.mitre.as_ref().map(|id| MitreMapping {
@@ -56,6 +64,7 @@ pub fn classify_with_rules(
                 technique_name: get_mitre_name(id),
                 tactic: get_mitre_tactic(id),
             });
+            // Block rules still apply unconditionally.
             return AnalysisResult {
                 command: command.to_string(),
                 score: 100,
@@ -71,7 +80,7 @@ pub fn classify_with_rules(
         }
     }
 
-    classify_inner(command, context, rules_config)
+    inner_result
 }
 
 /// Classify a shell command and return a rich analysis.
@@ -119,12 +128,20 @@ fn classify_inner(
         scorer::score_command(analysis, context);
     }
 
-    // 5. Apply custom score overrides
+    // 5. Apply custom score overrides (with safety floor)
     if let Some(config) = rules_config {
         for analysis in &mut analyses {
             if let Some(exec) = &analysis.executable {
                 if let Some(ovr) = config.get_override(exec) {
-                    analysis.score = ovr.score;
+                    // If the command has a built-in rule (known dangerous command),
+                    // enforce a minimum score floor of 30 to prevent overrides from
+                    // trivializing known-risky executables.
+                    let floor = if crate::rules::lookup_command(exec).is_some() {
+                        30u8
+                    } else {
+                        0u8
+                    };
+                    analysis.score = ovr.score.max(floor);
                 }
             }
         }
@@ -223,8 +240,13 @@ pub fn risk_level(command: &str) -> RiskLevel {
 }
 
 /// Batch: classify multiple commands.
+/// Discovers custom rules once and reuses them for all commands.
 pub fn classify_batch(commands: &[&str], context: Option<&ClassifyContext>) -> Vec<AnalysisResult> {
-    commands.iter().map(|cmd| classify(cmd, context)).collect()
+    let discovered = custom_rules::RuleConfig::discover(context);
+    commands
+        .iter()
+        .map(|cmd| classify_inner(cmd, context, discovered.as_ref()))
+        .collect()
 }
 
 fn get_mitre_name(id: &str) -> String {

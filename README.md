@@ -39,8 +39,8 @@ brew install aryanbhosale/tap/sh-guard
 # Cargo (Rust)
 cargo install sh-guard-cli
 
-# npm
-npm install sh-guard
+# npm (CLI)
+npm install -g sh-guard-cli
 
 # PyPI
 pip install sh-guard
@@ -180,6 +180,8 @@ if (result.level === "critical") {
 }
 ```
 
+> **Note:** The `sh-guard` npm package provides napi bindings that must be built from source (`npm run build` requires a Rust toolchain). Pre-built `.node` binaries are not currently published to the npm registry. For the CLI, use `npm install sh-guard-cli` instead.
+
 ### Rust (native integration)
 
 ```rust
@@ -280,9 +282,9 @@ brew install aryanbhosale/tap/sh-guard
 cargo install sh-guard-cli
 ```
 
-### npm
+### npm (CLI)
 ```bash
-npm install sh-guard
+npm install -g sh-guard-cli
 ```
 
 ### PyPI

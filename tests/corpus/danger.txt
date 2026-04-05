@@ -46,7 +46,7 @@ sudo kill -9 1 | danger | 51-80
 # Shell execution
 bash -c 'echo hello' | danger | 51-80
 sh -c 'echo hello' | danger | 51-80
-source .bashrc | danger | 51-80
+source .bashrc | critical | 81-100
 . .bashrc | danger | 51-80
 eval 'echo hello' | danger | 51-80
 eval "rm -rf /tmp" | danger | 51-80
