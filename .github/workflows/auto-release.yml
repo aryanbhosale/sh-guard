@@ -3,44 +3,89 @@ name: Auto Release
 on:
   push:
     branches: [main]
-    paths:
-      - 'crates/*/Cargo.toml'
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
-  check-version:
+  tag:
+    # Skip bot commits (version bump commits from this workflow's tags)
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      changed: ${{ steps.version.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-      - name: Check version change
-        id: version
+          fetch-depth: 0
+
+      - name: Get latest tag version
+        id: latest
         run: |
-          CURRENT=$(grep '^version' crates/sh-guard-core/Cargo.toml | head -1 | cut -d'"' -f2)
-          echo "version=v${CURRENT}" >> $GITHUB_OUTPUT
-          PREV=$(git show HEAD~1:crates/sh-guard-core/Cargo.toml 2>/dev/null | grep '^version' | head -1 | cut -d'"' -f2 || echo "")
-          if [ "$CURRENT" != "$PREV" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
+          TAG=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          if [ -z "$TAG" ]; then
+            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
           else
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Latest tag: ${TAG:-none}"
+
+      - name: Determine bump type from PR labels
+        id: bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract PR number from merge commit message
+          PR_NUM=$(echo "${{ github.event.head_commit.message }}" | grep -oP '#\d+' | head -1 | tr -d '#')
+          BUMP="patch"
+
+          if [ -n "$PR_NUM" ]; then
+            LABELS=$(gh pr view "$PR_NUM" --json labels -q '.labels[].name' 2>/dev/null || echo "")
+            echo "PR #${PR_NUM} labels: $LABELS"
+
+            if echo "$LABELS" | grep -q "no-release"; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "Skipping release (no-release label)"
+              exit 0
+            fi
+
+            if echo "$LABELS" | grep -q "release:major"; then
+              BUMP="major"
+            elif echo "$LABELS" | grep -q "release:minor"; then
+              BUMP="minor"
+            fi
           fi
 
-  create-tag:
-    needs: check-version
-    if: needs.check-version.outputs.changed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create and push tag
-        # NOTE: Tags pushed via GITHUB_TOKEN will NOT trigger other workflows
-        # (e.g., release.yml). To trigger downstream workflows, use a PAT or
-        # a GitHub App token instead of the default GITHUB_TOKEN.
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+          echo "Bump type: $BUMP"
+
+      - name: Calculate next version
+        if: steps.bump.outputs.skip != 'true'
+        id: next
         run: |
-          git tag ${{ needs.check-version.outputs.version }}
-          git push origin ${{ needs.check-version.outputs.version }}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${{ steps.latest.outputs.version }}"
+          case "${{ steps.bump.outputs.bump }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Next version: $VERSION"
+
+      - name: Create and push tag
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.next.outputs.version }}" -m "Release v${{ steps.next.outputs.version }}"
+          git push origin "v${{ steps.next.outputs.version }}"
+          echo "Pushed tag v${{ steps.next.outputs.version }}"
+
+      - name: Trigger release workflow
+        if: steps.bump.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run release.yml --ref "v${{ steps.next.outputs.version }}"
+          echo "Dispatched release workflow for v${{ steps.next.outputs.version }}"
