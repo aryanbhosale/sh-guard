@@ -3,51 +3,93 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
+  id-token: write
+  packages: write
 
 jobs:
   build:
     name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-          - os: macos-latest
-            target: x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            npm_pkg: sh-guard-cli-darwin-arm64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            npm_pkg: sh-guard-cli-darwin-x64
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            npm_pkg: sh-guard-cli-linux-x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            npm_pkg: sh-guard-cli-linux-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            npm_pkg: sh-guard-cli-win32-x64
+
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
       - name: Install cross-compilation tools
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Set version from tag
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          # Update all workspace crate versions
+          for toml in crates/*/Cargo.toml; do
+            sed -i.bak "s/^version = \".*\"/version = \"${VERSION}\"/" "$toml" && rm -f "$toml.bak"
+          done
+          # Update internal dependency versions
+          for toml in crates/sh-guard-cli/Cargo.toml crates/sh-guard-mcp/Cargo.toml crates/sh-guard-napi/Cargo.toml crates/sh-guard-python/Cargo.toml; do
+            sed -i.bak "s/sh-guard-core = { version = \"[^\"]*\"/sh-guard-core = { version = \"${VERSION}\"/" "$toml" && rm -f "$toml.bak"
+          done
+          echo "Building version $VERSION"
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }} --bin sh-guard --bin sh-guard-mcp
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-      - name: Package (Unix)
+
+      - name: Stage binaries for npm
+        shell: bash
+        run: |
+          mkdir -p npm/${{ matrix.npm_pkg }}/bin
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp target/${{ matrix.target }}/release/sh-guard.exe npm/${{ matrix.npm_pkg }}/bin/
+            cp target/${{ matrix.target }}/release/sh-guard-mcp.exe npm/${{ matrix.npm_pkg }}/bin/
+          else
+            cp target/${{ matrix.target }}/release/sh-guard npm/${{ matrix.npm_pkg }}/bin/
+            cp target/${{ matrix.target }}/release/sh-guard-mcp npm/${{ matrix.npm_pkg }}/bin/
+            chmod +x npm/${{ matrix.npm_pkg }}/bin/*
+          fi
+
+      - name: Create release archive (Unix)
         if: runner.os != 'Windows'
         run: |
           mkdir -p dist
           cp target/${{ matrix.target }}/release/sh-guard dist/
           cp target/${{ matrix.target }}/release/sh-guard-mcp dist/
           cd dist && tar czf sh-guard-${{ matrix.target }}.tar.gz sh-guard sh-guard-mcp
-      - name: Package (Windows)
+
+      - name: Create release archive (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
@@ -55,30 +97,433 @@ jobs:
           cp target/${{ matrix.target }}/release/sh-guard.exe dist/
           cp target/${{ matrix.target }}/release/sh-guard-mcp.exe dist/
           cd dist && tar czf sh-guard-${{ matrix.target }}.tar.gz sh-guard.exe sh-guard-mcp.exe
-      - name: Package zip (Windows)
+      - name: Create zip (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           Compress-Archive -Path dist/sh-guard.exe, dist/sh-guard-mcp.exe -DestinationPath dist/sh-guard-${{ matrix.target }}.zip
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload binary archive
+        uses: actions/upload-artifact@v4
         with:
-          name: sh-guard-${{ matrix.target }}
+          name: archive-${{ matrix.target }}
           path: |
             dist/sh-guard-${{ matrix.target }}.tar.gz
             dist/sh-guard-${{ matrix.target }}.zip
 
-  release:
-    name: Release
+      - name: Upload npm artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.npm_pkg }}
+          path: npm/${{ matrix.npm_pkg }}
+
+  # ── 1. npm + GitHub Release ─────────────────────────────────────────
+  publish-npm:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Create Release
+
+      - name: Sync versions from tag
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Publishing version $VERSION"
+
+          # Update all npm package versions
+          for pkg_dir in npm/sh-guard-cli-*/; do
+            sed -i "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" "$pkg_dir/package.json"
+          done
+
+          # Update main package version and dependency versions
+          sed -i "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" npm/sh-guard/package.json
+          sed -i "s/\"sh-guard-cli-\([^\"]*\)\": \"[^\"]*\"/\"sh-guard-cli-\1\": \"${VERSION}\"/g" npm/sh-guard/package.json
+
+      - name: Stage binaries into npm packages
+        run: |
+          for artifact_dir in artifacts/sh-guard-cli-*/; do
+            pkg_name=$(basename "$artifact_dir")
+            mkdir -p "npm/$pkg_name/bin"
+            cp -r "$artifact_dir"/bin/* "npm/$pkg_name/bin/"
+            chmod +x npm/$pkg_name/bin/* 2>/dev/null || true
+          done
+
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for pkg_dir in npm/sh-guard-cli-darwin-arm64 npm/sh-guard-cli-darwin-x64 npm/sh-guard-cli-linux-x64 npm/sh-guard-cli-linux-arm64 npm/sh-guard-cli-win32-x64; do
+            echo "Publishing $(basename $pkg_dir)..."
+            cd "$pkg_dir"
+            npm publish --access public || echo "  (skipped, may already exist)"
+            cd "$GITHUB_WORKSPACE"
+          done
+
+      - name: Publish main package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd npm/sh-guard
+          npm publish --access public
+
+      - name: Download binary archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: archive-*
+          path: archives
+          merge-multiple: true
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/*/*.tar.gz
-            artifacts/*/*.zip
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
+          files: |
+            archives/*.tar.gz
+            archives/*.zip
+
+  # ── 2. crates.io ────────────────────────────────────────────────────
+  publish-cargo:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Set version from tag
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          for toml in crates/*/Cargo.toml; do
+            sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" "$toml"
+          done
+          for toml in crates/sh-guard-cli/Cargo.toml crates/sh-guard-mcp/Cargo.toml crates/sh-guard-napi/Cargo.toml crates/sh-guard-python/Cargo.toml; do
+            sed -i "s/sh-guard-core = { version = \"[^\"]*\"/sh-guard-core = { version = \"${VERSION}\"/" "$toml"
+          done
+
+      - name: Publish sh-guard-core
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: cargo publish --allow-dirty -p sh-guard-core
+
+      - name: Publish sh-guard-cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          sleep 15  # wait for crates.io to index sh-guard-core
+          cargo publish --allow-dirty -p sh-guard-cli
+
+      - name: Publish sh-guard-mcp
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          sleep 15
+          cargo publish --allow-dirty -p sh-guard-mcp
+
+  # ── 3. PyPI ──────────────────────────────────────────────────────────
+  publish-pypi:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64
+          - os: ubuntu-latest
+            target: aarch64
+          - os: macos-latest
+            target: x86_64
+          - os: macos-latest
+            target: aarch64
+          - os: windows-latest
+            target: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set version from tag
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          sed -i.bak "s/^version = \".*\"/version = \"${VERSION}\"/" crates/sh-guard-python/pyproject.toml && rm -f crates/sh-guard-python/pyproject.toml.bak
+          sed -i.bak "s/^version = \".*\"/version = \"${VERSION}\"/" crates/sh-guard-python/Cargo.toml && rm -f crates/sh-guard-python/Cargo.toml.bak
+          sed -i.bak "s/^version = \".*\"/version = \"${VERSION}\"/" crates/sh-guard-core/Cargo.toml && rm -f crates/sh-guard-core/Cargo.toml.bak
+          sed -i.bak "s/sh-guard-core = { version = \"[^\"]*\"/sh-guard-core = { version = \"${VERSION}\"/" crates/sh-guard-python/Cargo.toml && rm -f crates/sh-guard-python/Cargo.toml.bak
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist -m crates/sh-guard-python/Cargo.toml
+          manylinux: auto
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.target }}
+          path: dist
+
+  publish-pypi-upload:
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sdist
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" crates/sh-guard-python/pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" crates/sh-guard-python/Cargo.toml
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" crates/sh-guard-core/Cargo.toml
+          sed -i "s/sh-guard-core = { version = \"[^\"]*\"/sh-guard-core = { version = \"${VERSION}\"/" crates/sh-guard-python/Cargo.toml
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist -m crates/sh-guard-python/Cargo.toml
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        with:
+          command: upload
+          args: --non-interactive --skip-existing dist/*
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+  # ── 4. Docker (ghcr.io) ─────────────────────────────────────────────
+  publish-docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from tag
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          for toml in crates/*/Cargo.toml; do
+            sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" "$toml"
+          done
+          for toml in crates/sh-guard-cli/Cargo.toml crates/sh-guard-mcp/Cargo.toml crates/sh-guard-napi/Cargo.toml crates/sh-guard-python/Cargo.toml; do
+            sed -i "s/sh-guard-core = { version = \"[^\"]*\"/sh-guard-core = { version = \"${VERSION}\"/" "$toml"
+          done
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/aryanbhosale/sh-guard:${{ env.VERSION }}
+            ghcr.io/aryanbhosale/sh-guard:latest
+
+  # ── 5. Homebrew tap ─────────────────────────────────────────────────
+  publish-homebrew:
+    needs: publish-npm  # needs the GitHub Release to exist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download binary archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: archive-*
+          path: archives
+          merge-multiple: true
+
+      - name: Generate and push Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::TAP_TOKEN not set, skipping Homebrew tap update"
+            exit 0
+          fi
+
+          VERSION=${GITHUB_REF_NAME#v}
+
+          SHA_DARWIN_ARM=$(sha256sum archives/sh-guard-aarch64-apple-darwin.tar.gz | cut -d' ' -f1)
+          SHA_DARWIN_X64=$(sha256sum archives/sh-guard-x86_64-apple-darwin.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_X64=$(sha256sum archives/sh-guard-x86_64-unknown-linux-gnu.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_ARM=$(sha256sum archives/sh-guard-aarch64-unknown-linux-gnu.tar.gz | cut -d' ' -f1)
+
+          cat > /tmp/sh-guard.rb << FORMULA
+          class ShGuard < Formula
+            desc "Semantic shell command safety classifier for AI coding agents"
+            homepage "https://github.com/aryanbhosale/sh-guard"
+            license "GPL-3.0-only"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/v${VERSION}/sh-guard-aarch64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_ARM}"
+              end
+              on_intel do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/v${VERSION}/sh-guard-x86_64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_X64}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/v${VERSION}/sh-guard-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_ARM}"
+              end
+              on_intel do
+                url "https://github.com/aryanbhosale/sh-guard/releases/download/v${VERSION}/sh-guard-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${SHA_LINUX_X64}"
+              end
+            end
+
+            def install
+              bin.install "sh-guard"
+              bin.install "sh-guard-mcp" if File.exist?("sh-guard-mcp")
+            end
+
+            def caveats
+              <<~EOS
+                To auto-configure all your AI coding agents (Claude Code, Codex, Cursor, etc.):
+                  sh-guard --setup
+
+                To remove sh-guard from all agents:
+                  sh-guard --uninstall
+              EOS
+            end
+
+            test do
+              assert_match "SAFE", shell_output("#{bin}/sh-guard 'ls -la'")
+            end
+          end
+          FORMULA
+
+          git clone https://x-access-token:${GH_TOKEN}@github.com/aryanbhosale/homebrew-tap.git tap
+          mkdir -p tap/Formula
+          cp /tmp/sh-guard.rb tap/Formula/sh-guard.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/sh-guard.rb
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Update sh-guard to ${VERSION}"
+          git push
+
+  # ── 6. Snap Store ───────────────────────────────────────────────────
+  publish-snap:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from tag
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          sed -i "s/^version: .*/version: '${VERSION}'/" snap/snapcraft.yaml
+
+      - name: Build snap
+        uses: snapcore/action-build@v1
+        id: build
+
+      - name: Publish to Snap Store
+        continue-on-error: true
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_TOKEN }}
+        run: |
+          sudo snap install snapcraft --classic
+          snapcraft upload --release=stable ${{ steps.build.outputs.snap }}
+
+  # ── 7. Chocolatey ───────────────────────────────────────────────────
+  publish-choco:
+    needs: publish-npm  # needs the GitHub Release for download URL
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows archive
+        uses: actions/download-artifact@v4
+        with:
+          name: archive-x86_64-pc-windows-msvc
+          path: archives
+
+      - name: Build and push Chocolatey package
+        continue-on-error: true
+        shell: pwsh
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $archive = Get-ChildItem archives/*.zip | Select-Object -First 1
+          $checksum = (Get-FileHash $archive -Algorithm SHA256).Hash
+
+          # Patch nuspec version
+          $nuspec = Get-Content choco/sh-guard.nuspec -Raw
+          $nuspec = $nuspec -replace '<version>.*</version>', "<version>$version</version>"
+          Set-Content choco/sh-guard.nuspec $nuspec
+
+          # Embed checksum into install script
+          $install = Get-Content choco/tools/chocolateyinstall.ps1 -Raw
+          $install = $install -replace "-Checksum64 '[^']*'", "-Checksum64 '$checksum'"
+          Set-Content choco/tools/chocolateyinstall.ps1 $install
+
+          cd choco
+          choco pack
+          if ($env:CHOCO_API_KEY) {
+            choco push sh-guard.$version.nupkg --source https://push.chocolatey.org/ --api-key $env:CHOCO_API_KEY
+          } else {
+            Write-Warning "CHOCO_API_KEY not set, skipping push"
+          }
+
+  # ── 8. WinGet ───────────────────────────────────────────────────────
+  publish-winget:
+    needs: publish-npm  # needs the GitHub Release for download URL
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Submit to WinGet
+        continue-on-error: true
+        shell: pwsh
+        env:
+          WINGET_GITHUB_TOKEN: ${{ secrets.WINGET_GITHUB_TOKEN }}
+        run: |
+          if (-not $env:WINGET_GITHUB_TOKEN) {
+            Write-Warning "WINGET_GITHUB_TOKEN not set, skipping WinGet submission"
+            exit 0
+          }
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $url = "https://github.com/aryanbhosale/sh-guard/releases/download/${{ github.ref_name }}/sh-guard-x86_64-pc-windows-msvc.zip"
+
+          Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+
+          .\wingetcreate.exe update aryanbhosale.sh-guard `
+            --version $version `
+            --urls $url `
+            --token $env:WINGET_GITHUB_TOKEN `
+            --submit
