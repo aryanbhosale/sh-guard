@@ -11,6 +11,24 @@ PackageUrl: https://github.com/aryanbhosale/sh-guard
 License: GPL-3.0-only
 LicenseUrl: https://github.com/aryanbhosale/sh-guard/blob/main/LICENSE
 ShortDescription: Semantic shell command safety classifier for AI coding agents
+Description: |-
+  sh-guard is a semantic shell command safety classifier designed to protect AI coding agents
+  (Claude Code, Codex, Cursor, Cline, Windsurf) from executing dangerous shell commands.
+
+  It uses a three-layer analysis pipeline — AST parsing via tree-sitter-bash, semantic analysis
+  of command intent and target scope, and pipeline taint analysis to track data flow through
+  pipes — to score commands from 0 (safe) to 100 (critical) in under 100 microseconds.
+
+  Features:
+  - Semantic analysis, not pattern matching — understands what commands do
+  - Pipeline-aware — detects data exfiltration through piped commands
+  - Context-aware — scores commands relative to project/home/system scope
+  - Sub-100 microsecond classification (~7us for simple commands)
+  - MITRE ATT&CK mapping for every risk
+  - 157 command rules, 51 path rules, 25 injection patterns, 61 GTFOBins entries
+  - One-command setup for all AI agents: sh-guard --setup
+Moniker: sh-guard
+ReleaseNotesUrl: https://github.com/aryanbhosale/sh-guard/releases/tag/v0.1.0
 Tags:
 - ai-agent
 - bash

@@ -1,12 +1,17 @@
 {
   "name": "sh-guard-cli",
   "version": "0.1.0",
-  "description": "Semantic shell command safety classifier CLI",
+  "description": "Semantic shell command safety classifier for AI coding agents — AST-based risk scoring in under 100 microseconds",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/aryanbhosale/sh-guard"
   },
+  "homepage": "https://github.com/aryanbhosale/sh-guard",
+  "bugs": {
+    "url": "https://github.com/aryanbhosale/sh-guard/issues"
+  },
+  "author": "aryanbhosale",
   "bin": {
     "sh-guard": "bin/sh-guard.js"
   },

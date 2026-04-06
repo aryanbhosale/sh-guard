@@ -2,9 +2,13 @@
 name = "sh-guard-cli"
 version = "0.1.0"
 edition = "2021"
-description = "CLI for sh-guard: semantic shell command safety classifier"
+description = "CLI for sh-guard: semantic shell command safety classifier for AI coding agents"
 license = "GPL-3.0-only"
 repository = "https://github.com/aryanbhosale/sh-guard"
+readme = "README.md"
+homepage = "https://github.com/aryanbhosale/sh-guard"
+keywords = ["security", "shell", "bash", "safety", "cli"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "sh-guard"

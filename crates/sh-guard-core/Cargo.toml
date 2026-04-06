@@ -2,9 +2,13 @@
 name = "sh-guard-core"
 version = "0.1.0"
 edition = "2021"
-description = "Semantic shell command safety classifier"
+description = "Semantic shell command safety classifier — AST-based risk scoring for AI coding agents in under 100 microseconds"
 license = "GPL-3.0-only"
 repository = "https://github.com/aryanbhosale/sh-guard"
+readme = "README.md"
+homepage = "https://github.com/aryanbhosale/sh-guard"
+keywords = ["security", "shell", "bash", "safety", "ai-agent"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 tree-sitter = "0.26"
