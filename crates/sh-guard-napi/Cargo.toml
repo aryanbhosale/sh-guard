@@ -2,8 +2,10 @@
 name = "sh-guard-napi"
 version = "0.1.0"
 edition = "2021"
-description = "Node.js binding for sh-guard via napi-rs"
+description = "Node.js native bindings for sh-guard via napi-rs — semantic shell command safety classifier"
 license = "GPL-3.0-only"
+repository = "https://github.com/aryanbhosale/sh-guard"
+homepage = "https://github.com/aryanbhosale/sh-guard"
 
 [lib]
 crate-type = ["cdylib"]

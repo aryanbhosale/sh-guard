@@ -5,14 +5,25 @@ build-backend = "maturin"
 [project]
 name = "sh-guard"
 version = "0.1.0"
-description = "Semantic shell command safety classifier"
+description = "Semantic shell command safety classifier for AI coding agents — AST-based risk scoring in under 100 microseconds"
 license = { text = "GPL-3.0-only" }
 requires-python = ">=3.8"
+readme = "README.md"
+authors = [
+    { name = "aryanbhosale", email = "aryan@aryanbhosale.com" }
+]
+urls.Homepage = "https://github.com/aryanbhosale/sh-guard"
+urls.Repository = "https://github.com/aryanbhosale/sh-guard"
+urls.Issues = "https://github.com/aryanbhosale/sh-guard/issues"
+urls.Changelog = "https://github.com/aryanbhosale/sh-guard/blob/main/CHANGELOG.md"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Security",
     "Topic :: Software Development :: Testing",
+    "Topic :: System :: Systems Administration",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
 keywords = ["security", "shell", "bash", "safety", "classifier", "ai-agent"]
 

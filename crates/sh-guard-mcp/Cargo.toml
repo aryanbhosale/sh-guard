@@ -2,9 +2,13 @@
 name = "sh-guard-mcp"
 version = "0.1.0"
 edition = "2021"
-description = "MCP server for sh-guard: semantic shell command safety classifier"
+description = "MCP server for sh-guard: semantic shell command safety classifier for AI coding agents (Cursor, Cline, Windsurf)"
 license = "GPL-3.0-only"
 repository = "https://github.com/aryanbhosale/sh-guard"
+readme = "README.md"
+homepage = "https://github.com/aryanbhosale/sh-guard"
+keywords = ["security", "shell", "mcp", "ai-agent", "safety"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "sh-guard-mcp"

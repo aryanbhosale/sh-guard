@@ -2,8 +2,10 @@
 name = "sh-guard-python"
 version = "0.1.0"
 edition = "2021"
-description = "Python binding for sh-guard via PyO3"
+description = "Python bindings for sh-guard via PyO3 — semantic shell command safety classifier"
 license = "GPL-3.0-only"
+repository = "https://github.com/aryanbhosale/sh-guard"
+homepage = "https://github.com/aryanbhosale/sh-guard"
 
 [lib]
 name = "sh_guard"
