@@ -130,7 +130,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
@@ -177,7 +177,7 @@ jobs:
           npm publish --access public
 
       - name: Download binary archives
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: archive-*
           path: archives
@@ -298,7 +298,7 @@ jobs:
           command: sdist
           args: --out pypi-dist -m crates/sh-guard-python/Cargo.toml
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: wheels-*
           merge-multiple: true
@@ -353,7 +353,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download binary archives
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: archive-*
           path: archives
@@ -467,7 +467,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download Windows archive
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: archive-x86_64-pc-windows-msvc
           path: archives
